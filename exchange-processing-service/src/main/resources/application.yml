@@ -1,0 +1,27 @@
+server:
+  port: 8090
+
+
+spring:
+  jpa:
+    database: POSTGRESQL
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/processing
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+
+  flyway:
+    enabled: true
+    locations: classpath:db
+    url: jdbc:postgresql://localhost:5433/processing
+    user: postgres
+    password: password
+
+service:
+  currency:
+    url: http://localhost:8084
