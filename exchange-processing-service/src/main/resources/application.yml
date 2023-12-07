@@ -1,8 +1,9 @@
 server:
   port: 8090
 
-
 spring:
+  application:
+    name: exchange-processing-service
   jpa:
     database: POSTGRESQL
     show-sql: true
@@ -25,3 +26,9 @@ spring:
 service:
   currency:
     url: http://localhost:8084
+eureka:
+  client:
+    service-url:
+      default-zone: http://localhost:8761/eureka
+
+
