@@ -1,6 +1,7 @@
 server:
   port: 8084
 
+# Имя сервиса
 spring:
   application:
     name: currency-rate-service
@@ -9,6 +10,8 @@ spring:
 currency:
   client:
     url: "https://cbr.ru/scripts/XML_daily.asp"
+
+#настройка подключения клиента к серверу Еврики c указанием url
 eureka:
   client:
     service-url:
