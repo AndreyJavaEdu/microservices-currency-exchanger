@@ -1,1 +1,46 @@
 
+# Конфигурация Spring cloud gateway
+
+
+# Общий Порт gateway
+server:
+  port: 8080
+
+# Адреса сервисов
+cloud:
+  eureka-host: localhost
+  processing-service-url: http://localhost:8090
+  currency-service-url: http://localhost:8084
+
+
+# Имя сервиса Spring cloud gateway
+spring:
+  application:
+    name: api-gateway-service
+
+# Роутинг сервисов
+  cloud:
+    gateway:
+      discovery:
+        locator:
+            enabled: true
+            lower-case-service-id: true
+      routes:
+        - id: currency-rate-service
+          uri: ${cloud.currency-service-url}
+          predicates:
+            - Path=/money/**
+        - id: exchange-processing-service
+          uri: ${cloud.processing-service-url}
+          predicates:
+            - Path=/processing/**
+# Авторизация сервиса в Spring cloud Eureka
+eureka:
+  client:
+    service-url:
+      default-zone: http://${cloud.eureka-host}:8761/eureka
+
+# Видимость логов при обращении к сервисам
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
