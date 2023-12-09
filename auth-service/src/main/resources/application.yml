@@ -1,8 +1,24 @@
 server:
   port: 9000
+cloud:
+  eureka-host: localhost
 
 spring:
   application:
     name: authentication-service
+
+  datasource:
+    url: jdbc:h2:mem:auth-db
+    username: auth
+    password: password
+    driver-class-name: org.h2.Driver
+
+eureka:
+  client:
+    service-url:
+      default-zone: http://${cloud.eureka-host}:8761/eureka
+    enabled: false
+
+
 
 
