@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -59,5 +60,12 @@ public class AccountCreateService {
         AccountEntity account = repository.findById(accountId).orElseThrow(() -> new IllegalArgumentException("Account with" +
                 " id = " + accountId + " is not found"));
         return account;
+    }
+
+    /*
+    Получения списка всех считов у одного Юзера по его Id
+     */
+    public List<AccountEntity>getAllAccountsForUser(Long id){
+        return repository.findAllByUserId(id);
     }
 }
