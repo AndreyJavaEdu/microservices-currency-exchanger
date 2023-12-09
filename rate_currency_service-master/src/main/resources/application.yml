@@ -5,6 +5,8 @@ spring:
   application:
     name: currency-rate-service
 
+cloud:
+  eureka-host: localhost
 
 currency:
   client:
@@ -12,7 +14,7 @@ currency:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: http://${cloud.eureka-host}:8761/eureka
     enabled: false
 
 

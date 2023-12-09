@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -32,7 +33,11 @@ public class ProcessingAccountController {
     @PutMapping(path = "/exchange/{uid}")
     public BigDecimal exchangeCurrency (@PathVariable(value = "uid") String uid, @RequestBody ExchangeMoneyDTO data){
         return exchangerService.exchangeCurrency(uid, data.getFromAccountId(), data.getToAccountId(), data.getAmount());
+    }
 
+    @GetMapping("/accounts/{userId}")
+    public List<AccountEntity> getAllAccountsForUser(@PathVariable(value = "userId") Long id){
+        return service.getAllAccountsForUser(id);
     }
 }
 
