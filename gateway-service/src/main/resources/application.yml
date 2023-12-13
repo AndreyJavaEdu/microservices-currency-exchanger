@@ -11,6 +11,7 @@ cloud:
   eureka-host: localhost
   processing-service-url: http://localhost:8090
   currency-service-url: http://localhost:8084
+  identity-service-url: http://localhost:9797
 
 
 # Имя сервиса Spring cloud gateway
@@ -30,10 +31,16 @@ spring:
           uri: ${cloud.currency-service-url}
           predicates:
             - Path=/money/**
+
         - id: exchange-processing-service
           uri: ${cloud.processing-service-url}
           predicates:
             - Path=/processing/**
+
+        - id: identity-service
+          uri: ${cloud.identity-service-url}
+          predicates:
+            - Path=/auth/**
 # Авторизация сервиса в Spring cloud Eureka
 eureka:
   client:
