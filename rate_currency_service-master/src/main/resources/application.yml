@@ -11,11 +11,21 @@ cloud:
 currency:
   client:
     url: "https://cbr.ru/scripts/XML_daily.asp"
+#eureka:
+#  client:
+#    service-url:
+#      defaultZone: http://${cloud.eureka-host}:8761/eureka
+#    enabled: false
+
 eureka:
   client:
+    fetch-registry: true
+    register-with-eureka: true
     service-url:
-      defaultZone: http://${cloud.eureka-host}:8761/eureka
-    enabled: false
-
+      defaultZone: http://${cloud.eureka-host}:8761/eureka/
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
 
 

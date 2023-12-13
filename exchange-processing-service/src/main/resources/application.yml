@@ -4,7 +4,7 @@ server:
 cloud:
   db-host: localhost
   eureka-host: localhost
-  currency-url: http://localhost:8084
+#  currency-url: http://localhost:8084
 
 spring:
   application:
@@ -29,13 +29,22 @@ spring:
     user: postgres
     password: password
 
-service:
-  currency:
-    url: ${cloud.currency-url}
+#service:
+#  currency:
+#    url: ${cloud.currency-url}
+#eureka:
+#  client:
+#    service-url:
+#      default-zone: http://${cloud.eureka-host}:8761/eureka/
+#    enabled: false
+
 eureka:
   client:
+    fetch-registry: true
+    register-with-eureka: true
     service-url:
-      default-zone: http://${cloud.eureka-host}:8761/eureka
-    enabled: false
-
-
+      defaultZone: http://${cloud.eureka-host}:8761/eureka/
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}

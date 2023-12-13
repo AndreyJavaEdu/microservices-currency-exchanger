@@ -12,11 +12,11 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 public class CurrencyService {
     private final RestTemplate restClient;
-
-    @Value("${service.currency.url}")
-    private String currencyUrl;
+//До включения балансировки Spring Cloud
+//    @Value("${service.currency.url}")
+//    private String currencyUrl;
 
     public BigDecimal loadCurrencyRate(String code){
-        return restClient.getForObject(currencyUrl + "/money/quotation/{code}", BigDecimal.class,  code);
+        return restClient.getForObject("http://CURRENCY-RATE-SERVICE/money/quotation/{code}", BigDecimal.class,  code);
     }
 }
