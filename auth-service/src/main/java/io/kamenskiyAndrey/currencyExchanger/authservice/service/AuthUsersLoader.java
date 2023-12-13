@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
@@ -14,13 +16,19 @@ import org.springframework.stereotype.Repository;
 Класс для загрузки пользователя при старте приложения
  */
 @Component
-@RequiredArgsConstructor
 public class AuthUsersLoader implements CommandLineRunner {
+
+
 
     private final AuthUserRepository repository;
 
     //Используем данный Бин для кодирования пароля
     private final PasswordEncoder passwordEncoder;
+
+    public AuthUsersLoader(AuthUserRepository repository, PasswordEncoder passwordEncoder) {
+        this.repository = repository;
+        this.passwordEncoder = new BCryptPasswordEncoder(12);
+    }
 
     @Override
     public void run(String... args) throws Exception {
