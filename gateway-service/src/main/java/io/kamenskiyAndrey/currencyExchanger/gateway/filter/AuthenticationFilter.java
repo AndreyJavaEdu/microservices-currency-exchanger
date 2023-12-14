@@ -45,6 +45,8 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                     authHeader = authHeader.substring(7); //обрезаем Хедер и возвращаем его с 7 индекса (т.е. от Хедера отрежется слово Bearer и один пробел)
                 }
                 try {
+                    /*Этот код не безопасен, если кто то сможет получить данные из данного REST запроса, поэтому лучше замаскировать этот токен который мы получили
+                     */
                     //Делаем REST запрос с использование RestTemplate в сервис аутентификации identity-service для проверки валидности токена
                     String requestOfValidationToken = template.getForObject("http://authentificational-service/auth/validate?token=" + authHeader, String.class);
                 } catch (Exception ex) {
@@ -56,8 +58,6 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
         });
     }
 
-
     public static class Config {
     }
-
 }
