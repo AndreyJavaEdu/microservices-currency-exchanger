@@ -1,6 +1,7 @@
 package io.kamenskiyAndrey.currencyExchanger.gateway.filter;
 
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.function.Predicate;
@@ -11,6 +12,7 @@ import java.util.function.Predicate;
 Т.е. мы должны позволить пользователю получить токен и отправить его в запросе в ввиде Хедера
 и далее мы будем аутентифицировать этот токен в API Gateway
  */
+@Component
 public class RouteValidator {
 
     public static final List<String> openApiEndpoints = List.of(
