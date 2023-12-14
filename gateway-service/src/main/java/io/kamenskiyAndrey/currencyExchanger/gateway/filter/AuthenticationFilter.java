@@ -1,6 +1,7 @@
 package io.kamenskiyAndrey.currencyExchanger.gateway.filter;
 
 
+import io.kamenskiyAndrey.currencyExchanger.gateway.util.JWTUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
@@ -20,6 +21,8 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
     private RouteValidator validator;
     @Autowired
     private RestTemplate template;
+    @Autowired
+    private JWTUtil jwtUtil;
 
     public AuthenticationFilter() {
         super(Config.class);
@@ -48,7 +51,8 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                     /*Этот код не безопасен, если кто то сможет получить данные из данного REST запроса, поэтому лучше замаскировать этот токен который мы получили
                      */
                     //Делаем REST запрос с использование RestTemplate в сервис аутентификации identity-service для проверки валидности токена
-                    String requestOfValidationToken = template.getForObject("http://authentificational-service/auth/validate?token=" + authHeader, String.class);
+//                    String requestOfValidationToken = template.getForObject("http://authentificational-service/auth/validate?token=" + authHeader, String.class);
+                    jwtUtil.validateToken(authHeader);
                 } catch (Exception ex) {
                     System.out.println("invalid access!!!");
                     throw new RuntimeException("Неавторизованный запрос в приложении, токен не прошел валидацию");
