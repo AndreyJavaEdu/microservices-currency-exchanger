@@ -20,7 +20,10 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
     public GatewayFilter apply(Config config) {
         //Здесь пишем логику фильтра
         return ((exchange, chain) ->{
-
+/*тут пишем логику проверки есть Хедер в запросе или нет. Если запрос содержит Хедер, то мы должны делать код валидации
+токена но перед этим мы должны показать для каких эндпоинтов мы будем проводить валидацию. Для этого создадим класс валидации
+RouteValidator.
+ */
 
             return chain.filter(exchange);
         });
