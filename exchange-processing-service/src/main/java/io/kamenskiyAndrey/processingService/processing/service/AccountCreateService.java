@@ -2,7 +2,10 @@ package io.kamenskiyAndrey.processingService.processing.service;
 
 import io.kamenskiyAndrey.processingService.processing.domainModel.AccountEntity;
 import io.kamenskiyAndrey.processingService.processing.dto.NewAccountDTO;
+import io.kamenskiyAndrey.processingService.processing.model.AccountEvent;
+import io.kamenskiyAndrey.processingService.processing.model.Operation;
 import io.kamenskiyAndrey.processingService.processing.repository.AccountRepository;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -11,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -62,10 +66,23 @@ public class AccountCreateService {
         return account;
     }
 
-    /*
-    Получения списка всех считов у одного Юзера по его Id
-     */
+
+    //Получения списка всех считов у одного Юзера по его Id
     public List<AccountEntity>getAllAccountsForUser(Long id){
         return repository.findAllByUserId(id);
+    }
+
+    //Метод генерации события
+    private AccountEvent createEvent(String uid, AccountEntity account, Long fromAccount, Operation operation, BigDecimal amount){
+        var currentDate = new Date();
+        return AccountEvent.builder()
+                .uuid(uid)
+                .accountId(account.getId())
+                .userId(account.getUserId())
+                .fromAccount(fromAccount)
+                .operation(operation)
+                .amount(amount)
+                .created(currentDate)
+                .build();
     }
 }

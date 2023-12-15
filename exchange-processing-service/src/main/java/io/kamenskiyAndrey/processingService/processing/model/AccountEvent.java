@@ -3,9 +3,9 @@ package io.kamenskiyAndrey.processingService.processing.model;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
-import org.antlr.v4.runtime.misc.NotNull;
 
 import java.math.BigDecimal;
+import java.util.Date;
 
 @Data
 @Builder
@@ -27,5 +27,5 @@ public class AccountEvent {
     private BigDecimal amount;
 
     @reactor.util.annotation.NonNull
-    private Data date;
+    private Date created;
 }

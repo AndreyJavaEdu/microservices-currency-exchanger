@@ -29,7 +29,7 @@ public class ExchangerService {
         AccountEntity target = service.getAccountById(toAccount); // объект счета который будет получать деньги с другого счета
 
         BigDecimal result;
-            //Проверка если код валют на обоих счетах в РУБЛЯХ.
+        //Проверка если код валют на обоих счетах в РУБЛЯХ.
         if (CURRENCY_RUB.equals(source.getCurrencyCode()) && CURRENCY_RUB.equals(target.getCurrencyCode())) {
             result = moneyTransferFromOneAccToOther(uuid, source, target, ammount);
 
@@ -54,6 +54,7 @@ public class ExchangerService {
         }
         return result;
     }
+
     /*
     Вспомогательный метод веревода валюты с разными катировками отличными от рублей
      */
@@ -64,9 +65,10 @@ public class ExchangerService {
         BigDecimal rub = ammount.multiply(curRateSource); //сконвертировали сумму перевода в рубли
         BigDecimal result = rub.divide(curRateTarget, 5, RoundingMode.HALF_DOWN); //сконвертировали сумму перевода в рублях в валюту получателя
 
-        service.addMoneyToAccount(uuid, target.getId(),result);
+        service.addMoneyToAccount(uuid, target.getId(), result);
         return result;
     }
+
     /*
     Вспомогательный метод перевода валюты с одного счета на другой счет если валюта с кодом RUB
      */
@@ -76,6 +78,7 @@ public class ExchangerService {
         service.addMoneyToAccount(uuid, target.getId(), amount);
         return amount;
     }
+
     /*
     Вспомогательный метод перевода валюты когда валюта в одном из счету в рублях
      */
