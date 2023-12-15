@@ -31,22 +31,35 @@ spring:
           uri: ${cloud.currency-service-url}
           predicates:
             - Path=/money/**
+          filters:
+            - AuthenticationFilter
 
         - id: exchange-processing-service
           uri: ${cloud.processing-service-url}
           predicates:
             - Path=/processing/**
+          filters:
+            - AuthenticationFilter
 
         - id: identity-service
           uri: ${cloud.identity-service-url}
           predicates:
             - Path=/auth/**
 # Авторизация сервиса в Spring cloud Eureka
+#eureka:
+#  client:
+#    service-url:
+#      defaultZone: http://${cloud.eureka-host}:8761/eureka
 eureka:
   client:
+    fetch-registry: true
+    register-with-eureka: true
     service-url:
-      default-zone: http://${cloud.eureka-host}:8761/eureka
-
+      defaultZone: http://${cloud.eureka-host}:8761/eureka/
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
 # Видимость логов при обращении к сервисам
 logging:
   level:
