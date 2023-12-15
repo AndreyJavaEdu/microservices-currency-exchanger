@@ -4,11 +4,17 @@ server:
 cloud:
   db-host: localhost
   eureka-host: localhost
+  kafka-host: localhost
 #  currency-url: http://localhost:8084
 
 spring:
   application:
     name: exchange-processing-service
+#Настроили порт кафки
+  kafka:
+    producer:
+      bootstrap-servers: ${cloud.kafka-host}:9092
+
 
   jpa:
     database: POSTGRESQL
