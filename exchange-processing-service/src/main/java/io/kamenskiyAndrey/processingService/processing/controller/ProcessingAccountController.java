@@ -5,6 +5,7 @@ import io.kamenskiyAndrey.processingService.processing.domainModel.AccountEntity
 import io.kamenskiyAndrey.processingService.processing.dto.ExchangeMoneyDTO;
 import io.kamenskiyAndrey.processingService.processing.dto.NewAccountDTO;
 import io.kamenskiyAndrey.processingService.processing.dto.PutMoneyToAccountDTO;
+import io.kamenskiyAndrey.processingService.processing.model.Operation;
 import io.kamenskiyAndrey.processingService.processing.service.AccountCreateService;
 import io.kamenskiyAndrey.processingService.processing.service.ExchangerService;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,7 @@ public class ProcessingAccountController {
 
     @PutMapping(path = "/account/{id}")
     public AccountEntity putMoney(@PathVariable(value = "id") Long accountId, @RequestBody PutMoneyToAccountDTO data){
-       return service.addMoneyToAccount(data.getUid(), accountId, data.getAmountOfMoney());
+       return service.addMoneyToAccount(data.getUid(), accountId, Operation.PUT, data.getAmountOfMoney());
     }
 
     @PutMapping(path = "/exchange/{uid}")

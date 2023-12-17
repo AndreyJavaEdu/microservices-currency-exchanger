@@ -1,6 +1,7 @@
 package io.kamenskiyAndrey.processingService.processing.service;
 
 import io.kamenskiyAndrey.processingService.processing.domainModel.AccountEntity;
+import io.kamenskiyAndrey.processingService.processing.model.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -60,12 +61,12 @@ public class ExchangerService {
      */
     public BigDecimal exchangeWithDifferenceOfAllCurrCode(String uuid, BigDecimal curRateSource, BigDecimal curRateTarget
             , AccountEntity source, AccountEntity target, BigDecimal ammount) {
-        service.addMoneyToAccount(uuid, source.getId(), ammount.negate());
+        service.addMoneyToAccount(uuid, source.getId(), Operation.EXCHANGE, ammount.negate());
 
         BigDecimal rub = ammount.multiply(curRateSource); //сконвертировали сумму перевода в рубли
         BigDecimal result = rub.divide(curRateTarget, 5, RoundingMode.HALF_DOWN); //сконвертировали сумму перевода в рублях в валюту получателя
 
-        service.addMoneyToAccount(uuid, target.getId(), result);
+        service.addMoneyToAccount(uuid, target.getId(), Operation.EXCHANGE, result);
         return result;
     }
 
@@ -74,8 +75,8 @@ public class ExchangerService {
      */
     public BigDecimal moneyTransferFromOneAccToOther(String uuid, AccountEntity source
             , AccountEntity target, BigDecimal amount) {
-        service.addMoneyToAccount(uuid, source.getId(), amount.negate());
-        service.addMoneyToAccount(uuid, target.getId(), amount);
+        service.addMoneyToAccount(uuid, source.getId(), Operation.EXCHANGE, amount.negate());
+        service.addMoneyToAccount(uuid, target.getId(), Operation.EXCHANGE, amount);
         return amount;
     }
 
@@ -84,9 +85,9 @@ public class ExchangerService {
      */
     public BigDecimal exchangeWithDifferenceOfOneCurrCode(String uuid, AccountEntity source
             , AccountEntity target, BigDecimal currencyRate, BigDecimal amount) {
-        service.addMoneyToAccount(uuid, source.getId(), amount.negate());
+        service.addMoneyToAccount(uuid, source.getId(), Operation.EXCHANGE, amount.negate());
         BigDecimal moneyConversion = amount.multiply(currencyRate); // конвертация суммы денег перевода в ту валюту кому переводим
-        service.addMoneyToAccount(uuid, target.getId(), moneyConversion);
+        service.addMoneyToAccount(uuid, target.getId(), Operation.EXCHANGE, moneyConversion);
         return moneyConversion;
     }
 }
