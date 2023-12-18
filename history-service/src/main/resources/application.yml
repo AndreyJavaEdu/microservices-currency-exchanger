@@ -1,0 +1,43 @@
+server:
+  port: 8015
+cloud:
+  db-host: localhost
+  eureka-host: localhost
+  kafka-host: localhost
+
+spring:
+  application:
+    name: history-service
+
+  datasource:
+    url: jdbc:postgresql://${cloud.db-host}:5433/processing
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+
+  kafka:
+    consumer:
+      bootstrap-servers: ${cloud.kafka-host}:9092
+      key-deserializer: org.apache.kafka.common.serialization.LongSerializer
+      value-deserializer: org.apache.kafka.common.serialization.StringSerializer
+      group-id: ${spring.application.name}-group
+#      для считывания начального off set для группы потребителей
+      auto-offset-reset: earliest
+
+  flyway:
+    enabled: true
+    locations: classpath:db
+    url: jdbc:postgresql://${cloud.db-host}:5433/account-history
+    user: postgres
+    password: password
+
+eureka:
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://${cloud.eureka-host}:8761/eureka/
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
