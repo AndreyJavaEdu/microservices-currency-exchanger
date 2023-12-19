@@ -8,5 +8,5 @@ create table ACCOUNT_EVENT
     operation_code smallint not null,
     amount bigint not null,
     date_creation_event timestamp not null,
-    CONSTRAINT ACCOUNT_EVENT primary key (uuid, account_id)
+    primary key (uuid, account_id)
 );

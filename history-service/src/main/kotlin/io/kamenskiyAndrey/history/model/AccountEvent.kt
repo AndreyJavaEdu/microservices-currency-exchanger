@@ -11,7 +11,7 @@ import java.util.*
 data class AccountEvent(
         @Id
         @Column(name = "uuid", nullable = false)
-        val uid: String,
+        val uuid: String,
 
         @Id
         @Column(name = "account_id", nullable = false)
@@ -33,13 +33,13 @@ data class AccountEvent(
         val amount: BigDecimal,
 
         @Column(name = "date_creation_event", nullable = false)
-        val dateCreationEvent: Date,
+        val created: Date,
 )
 
 //Класс составного ключа
 @Embeddable // пометили данный класс как встаиваемый в класс AccountEvent
 class EventKey(
-        val uid: String,
+        val uuid: String,
         val accountId: Long
 ): Serializable
 
