@@ -7,5 +7,5 @@ import org.springframework.stereotype.Repository
 
 @Repository
 interface AccountEventRepository: JpaRepository<AccountEvent, EventKey> {
-    fun findAllByAccountIdAAndUserIdOrderByCreatedDesc(accountId: Long, userId: Long?): List<AccountEvent>
+    fun findAllByAccountIdAndUserIdOrderByCreatedDesc(accountId: Long, userId: Long?): List<AccountEvent>
 }
