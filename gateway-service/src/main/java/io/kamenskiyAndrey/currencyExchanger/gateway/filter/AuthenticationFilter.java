@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -33,6 +34,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
     public GatewayFilter apply(Config config) {
         //Здесь пишем логику фильтра
         return ((exchange, chain) -> {
+            ServerHttpRequest request = null;
         /*тут пишем логику проверки есть ли Хедер в запросе или нет. Если запрос содержит Хедер, то мы должны делать код валидации
         токена, но перед этим мы должны показать для каких эндпоинтов мы будем проводить валидацию. Для этого создадим класс валидатор
         RouteValidator.
@@ -53,12 +55,20 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                     //Делаем REST запрос с использование RestTemplate в сервис аутентификации identity-service для проверки валидности токена
 //                    String requestOfValidationToken = template.getForObject("http://authentificational-service/auth/validate?token=" + authHeader, String.class);
                     jwtUtil.validateToken(authHeader);
+
+                    //Здесь мы меняем Хэдер запроса, который содержит Токен на информацию, а именно UserId - идентификатор пользователя
+                     request = exchange.getRequest()
+                            .mutate()
+                            .header("UserId", String.valueOf(jwtUtil.extractUserId(authHeader)))
+                            .build();
+
+
                 } catch (Exception ex) {
                     System.out.println("invalid access!!!");
                     throw new RuntimeException("Неавторизованный запрос в приложении, токен не прошел валидацию");
                 }
             }
-            return chain.filter(exchange);
+            return chain.filter(exchange.mutate().request(request).build());
         });
     }
 

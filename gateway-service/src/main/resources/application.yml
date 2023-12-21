@@ -12,6 +12,7 @@ cloud:
   processing-service-url: http://localhost:8090
   currency-service-url: http://localhost:8084
   identity-service-url: http://localhost:9797
+  account-history-service-url: http://localhost:8015
 
 
 # Имя сервиса Spring cloud gateway
@@ -45,6 +46,13 @@ spring:
           uri: ${cloud.identity-service-url}
           predicates:
             - Path=/auth/**
+
+        - id: account-history-service
+          uri: ${cloud.account-history-service-url}
+          predicates:
+            - Path=/history/**
+          filters:
+            - AuthenticationFilter
 # Авторизация сервиса в Spring cloud Eureka
 #eureka:
 #  client:

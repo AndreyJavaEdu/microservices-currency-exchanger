@@ -22,7 +22,9 @@ public class ProcessingAccountController {
     private final ExchangerService exchangerService;
 
     @PostMapping(path = "/account")
-    public AccountEntity createAccount(@RequestBody NewAccountDTO account){
+    public AccountEntity createAccount(@RequestBody NewAccountDTO account, @RequestHeader String userId){
+        Long userIdfromHeader = Long.valueOf(userId);
+        account.setUserId(userIdfromHeader);
         return service.createNewAccount(account);
     }
 
@@ -36,9 +38,11 @@ public class ProcessingAccountController {
         return exchangerService.exchangeCurrency(uid, data.getFromAccountId(), data.getToAccountId(), data.getAmount());
     }
 
-    @GetMapping("/accounts/{userId}")
-    public List<AccountEntity> getAllAccountsForUser(@PathVariable(value = "userId") Long id){
-        return service.getAllAccountsForUser(id);
+    @GetMapping("/accounts/")
+    public List<AccountEntity> getAllAccountsForUser(@RequestHeader String userId){
+        Long userIdfromHeader = Long.valueOf(userId);
+        System.out.println(userIdfromHeader);
+        return service.getAllAccountsForUser(userIdfromHeader);
     }
 }
 
