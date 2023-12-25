@@ -1,0 +1,4 @@
+telegram:
+    botName: java-bot-notification
+    token: ${TELEGRAM_BOT_TOKEN}
+
