@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration
 Класс конфигурации, чтобы прочитать конфигурацию из application.yml
  */
 @Configuration
-class TelegramBotConfig {
+class TelegramBotConfig(settings: BotSettings) {
     private lateinit var appContext: ApplicationContext //инжектим данный бин, чтобы мы могли прочитать файлы из внешнего ресурса
 
     //также подключим наши настройки которые мы указали в application.yml с помощью аннотации Value мы их достанем из файла application
