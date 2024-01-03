@@ -13,7 +13,6 @@ class TelegramSubscriptionServiceAgent(
     val commands: Map<String, BotCommandProcessor> //инжектим мапу с ключем имени сервиса и сам сервис реализуещий интефейс BotCommandProcessor
 ) : TelegramLongPollingBot(settings.token) {
 
-
     override fun getBotUsername(): String = settings.nameOfBot
 
     override fun onUpdateReceived(update: Update) {
