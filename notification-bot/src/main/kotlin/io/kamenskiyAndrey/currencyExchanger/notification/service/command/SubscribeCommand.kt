@@ -1,6 +1,6 @@
 package io.kamenskiyAndrey.currencyExchanger.notification.service.command
 
-import io.kamenskiyAndrey.currencyExchanger.notification.model.GetTokenCredititialsDTO
+import io.kamenskiyAndrey.currencyExchanger.notification.model.GetTokenCredentialsDTO
 import io.kamenskiyAndrey.currencyExchanger.notification.service.ServiceToGetUserId
 import io.kamenskiyAndrey.currencyExchanger.notification.service.SubscriptionService
 import org.slf4j.Logger
@@ -19,7 +19,7 @@ val subscriptionService: SubscriptionService
 
 
 
-        val credentials = GetTokenCredititialsDTO(name = user, password = password)
+        val credentials = GetTokenCredentialsDTO(name = user, password = password)
 
 
         logger.info("Получение объекта ДТО - {}", credentials)

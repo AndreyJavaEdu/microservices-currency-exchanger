@@ -1,6 +1,6 @@
 package io.kamenskiyAndrey.currencyExchanger.notification.service
 
-import io.kamenskiyAndrey.currencyExchanger.notification.model.GetTokenCredititialsDTO
+import io.kamenskiyAndrey.currencyExchanger.notification.model.GetTokenCredentialsDTO
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpEntity
@@ -13,11 +13,11 @@ import org.springframework.web.client.RestTemplate
 class ServiceToGetUserId (val restTemplate: RestTemplate) {
     val logger: Logger = LoggerFactory.getLogger(ServiceToGetUserId::class.java)
 
-    fun getToken( data: GetTokenCredititialsDTO): String? {
+    fun getToken( data: GetTokenCredentialsDTO): String? {
         try {
             val headers = HttpHeaders()
             headers.contentType = MediaType.APPLICATION_JSON
-            val requestEntity: HttpEntity<GetTokenCredititialsDTO> = HttpEntity(data, headers)
+            val requestEntity: HttpEntity<GetTokenCredentialsDTO> = HttpEntity(data, headers)
             val httpResponse = restTemplate.postForEntity("http://localhost:9797/auth/token", requestEntity, String::class.java)
             return httpResponse.body
         } catch (ex: RuntimeException) {
