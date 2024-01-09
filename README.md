@@ -40,4 +40,4 @@ Spring Cloud Eureka обычно используется в среде микр
 
   
 ### Общая схема проекта:
-![Блок схема проекта микросервисы.png](%D1%F5%E5%EC%FB%20%E4%EB%FF%20README%2F%C1%EB%EE%EA%20%F1%F5%E5%EC%E0%20%EF%F0%EE%E5%EA%F2%E0%20%EC%E8%EA%F0%EE%F1%E5%F0%E2%E8%F1%FB.png)
+![Блок схема проекта микросервисы.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/03194480b543b4c3d1d750758b0748c49669cc6e/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/%D0%91%D0%BB%D0%BE%D0%BA%20%D1%81%D1%85%D0%B5%D0%BC%D0%B0%20%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D0%B0%20%D0%BC%D0%B8%D0%BA%D1%80%D0%BE%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D1%8B.png)
