@@ -2,3 +2,31 @@ telegram:
     botName: java-bot-notification
     token: ${TELEGRAM_BOT_TOKEN}
 
+cloud:
+    db-host: localhost
+    eureka-host: localhost
+    kafka-host: localhost
+
+spring:
+    application:
+        name: notification-bot
+
+    kafka:
+        consumer:
+            bootstrap-servers: ${cloud.kafka-host}:9092
+            key-deserializer: org.apache.kafka.common.serialization.LongDeserializer
+            value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            group-id: ${spring.application.name}-group
+            #      для считывания начального off set для группы потребителей
+            auto-offset-reset: earliest
+
+server:
+    port: 8020
+
+#eureka:
+#    client:
+#        fetch-registry: true
+#        register-with-eureka: true
+#        service-url:
+#            defaultZone: http://${cloud.eureka-host}:8761/eureka/
+
