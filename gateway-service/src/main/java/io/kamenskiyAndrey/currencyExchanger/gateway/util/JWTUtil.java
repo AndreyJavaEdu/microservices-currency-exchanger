@@ -3,16 +3,13 @@ package io.kamenskiyAndrey.currencyExchanger.gateway.util;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.impl.DefaultClaims;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Function;
 
 /*
@@ -21,6 +18,7 @@ import java.util.function.Function;
  */
 @Component
 public class JWTUtil {
+    Logger logger = LoggerFactory.getLogger(JWTUtil.class);
     public final static String SECRET = "087F23A66DEE433829D5EB642EA91A0D7C2AE1E0CF1F30B2041EAB3465898840"; //секретный 32 битный ключ от Зеона сгенерированный Морфеусом =))
 //Метод для валидации токена
     public void validateToken(final String token){
@@ -45,7 +43,9 @@ public class JWTUtil {
 
     //Метод получения userId
     public Integer extractUserId(String token){
-        return extractAllClaims(token).get("userId", Integer.class);
+        Integer userId = extractAllClaims(token).get("userId", Integer.class);
+        logger.info("Извлеченный userId: {}", userId);
+        return userId;
     }
 
     //Общий метод по извлечению
@@ -56,11 +56,13 @@ public class JWTUtil {
     }
     //Метод получения тела полезной нагрузки токена
     private Claims extractAllClaims(String token) {
-        return Jwts
+        Claims claims = Jwts
                 .parserBuilder()
                 .setSigningKey(getSignKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+        logger.info("тело в токене - {}", claims);
+        return claims;
     }
 }
