@@ -1,0 +1,31 @@
+cloud:
+  db-host: localhost
+  eureka-host: localhost
+
+
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${cloud.db-host}:5433/security
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+
+  flyway:
+    enabled: true
+    locations: classpath:db
+    user: postgres
+    password: password
+    url: jdbc:postgresql://${cloud.db-host}:5433/security
+
+
+  application:
+    name: Authentificational-service
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${cloud.eureka-host}:8761/eureka
+
+server:
+  port: 9797
