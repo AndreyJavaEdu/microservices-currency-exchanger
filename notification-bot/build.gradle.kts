@@ -22,9 +22,16 @@ extra["springCloudVersion"] = "2023.0.0"
 
 dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
-	implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
+//	implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
+	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.springframework.kafka:spring-kafka")
 	implementation("org.telegram:telegrambots-spring-boot-starter:6.8.0")
+	implementation("org.springframework.boot:spring-boot-starter-web")
+//	Для Jwt
+	implementation("io.jsonwebtoken:jjwt-api:0.11.5")
+	runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
+	runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
+
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.kafka:spring-kafka-test")
 }
