@@ -8,10 +8,13 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
-
+/*
+Сервис по обращению в сервис аутентификации identity-service
+для получения токена в payload которого закодирован userId
+ */
 @Service
-class ServiceToGetUserId (val restTemplate: RestTemplate) {
-    val logger: Logger = LoggerFactory.getLogger(ServiceToGetUserId::class.java)
+class ServiceToGetToken (val restTemplate: RestTemplate) {
+    val logger: Logger = LoggerFactory.getLogger(ServiceToGetToken::class.java)
 
     fun getToken( data: GetTokenCredentialsDTO): String? {
         try {
