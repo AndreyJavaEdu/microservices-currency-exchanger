@@ -46,4 +46,4 @@ Spring Cloud Eureka обычно используется в среде микр
 ## Объяснение как работают микросервисы
 1. Микросервис по получению котировок валют ([rate_currency_service-master](rate_currency_service-master))
 
-![Схема работы микросервиса текущих котировок валют.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/03194480b543b4c3d1d750758b0748c49669cc6e/%D1%F5%E5%EC%FB%20%E4%EB%FF%20README%2F%D1%F5%E5%EC%E0%20%F0%E0%E1%EE%F2%FB%20%EC%E8%EA%F0%EE%F1%E5%F0%E2%E8%F1%E0%20%F2%E5%EA%F3%F9%E8%F5%20%EA%EE%F2%E8%F0%EE%E2%EE%EA%20%E2%E0%EB%FE%F2.png)
+![Схема работы микросервиса текущих котировок валют.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/4eb6724306484e3bb167447175b80e81e5dbc151/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/%D0%A1%D1%85%D0%B5%D0%BC%D0%B0%20%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B%20%D0%BC%D0%B8%D0%BA%D1%80%D0%BE%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%B0%20%D1%82%D0%B5%D0%BA%D1%83%D1%89%D0%B8%D1%85%20%D0%BA%D0%BE%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%BE%D0%BA%20%D0%B2%D0%B0%D0%BB%D1%8E%D1%82.png)
