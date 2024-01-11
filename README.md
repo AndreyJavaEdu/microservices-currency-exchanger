@@ -165,8 +165,110 @@ flyway-core, postgresql, spring-kafka, spring-cloud-starter-netflix-eureka-clien
 должно производиться исходя из текущих котировок валют (т.е. мы должны
 запрашивать текущую котировку валюты в Микросервисе котировок валют).
 
-В качестве СУБД использован Docker образ Postgres.
+В качестве СУБД использован Docker образ Postgres. Имя базы данных - processing,
+имя пользователя - postgres и пароль - password.
+Структура БД создается с помощью Fly way. Скрипт для создания таблицы
+находится в подпакете [migration](exchange-processing-service%2Fsrc%2Fmain%2Fresources%2Fdb%2Fmigration) в файле [V1__Account_table.sql](exchange-processing-service%2Fsrc%2Fmain%2Fresources%2Fdb%2Fmigration%2FV1__Account_table.sql):
+```postgresql
+create table ACCOUNT
+(
+    ID bigint not null primary key,
+    USER_ID bigint not null,
+    CURRENCY_CODE varchar(3) not null,
+    BALANCE numeric not null
+);
+CREATE SEQUENCE ACCOUNT_SEQ;
+```
+В [application.yml](exchange-processing-service%2Fsrc%2Fmain%2Fresources%2Fapplication.yml)
+мы настроили порт сервера данного микросервиса, имя микросервиса, а также сделали настройки jpa,
+datasource и flyway:
+```
+server:
+  port: 8090
+  
+spring:
+  application:
+    name: exchange-processing-service
+  jpa:
+    database: POSTGRESQL
+    show-sql: true
+    hibernate:
+      ddl-auto: none
 
+  datasource:
+    url: jdbc:postgresql://${cloud.db-host}:5433/processing
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+
+  flyway:
+    enabled: true
+    locations: classpath:db
+    url: jdbc:postgresql://${cloud.db-host}:5433/processing
+    user: postgres
+    password: password
+```
+Доменная модель описана с помощью POJO класса [AccountEntity.java](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2FdomainModel%2FAccountEntity.java)
+в пакете [domainModel](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2FdomainModel).
+Доменная модель необходима, чтобы Spring понял с какой моделью и структурой БД ему работать.
+Данный класс доменной модели, проаннотировали аннотациями jakarta.persistence для
+указания имени таблицы, имени колонок и обозначения генератора последовательности sequence
+для генерации нового идентификатора при создании нового счета.
+
+Для поиска в БД и создания новых объектов реализован интерфейс репозитория [AccountRepository.java](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Frepository%2FAccountRepository.java)
+в пакете [repository](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Frepository).
+
+Также разработан сервис создания счета (аккаунта) - в пакете [service](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Fservice)
+класс [AccountCreateService.java](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Fservice%2FAccountCreateService.java).
+В данном классе-сервисе реализован метод по созданию нового счета createNewAccount(), в качестве аргумента метод
+принимает объект класса DTO [NewAccountDTO.java](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Fdto%2FNewAccountDTO.java):
+```java
+@Data
+public class NewAccountDTO {
+    @JsonAlias("currency")
+    private String currencyCode;
+
+    @JsonAlias("user")
+    private Long UserId;
+
+}
+```
+В методе создания счета происходит создание нового объекта класса доменной модели AccountEntity, 
+который замаплен на таблицу БД, и далее поля этого объекта заполняются данными из 
+полученного объекта DTO и объект доменной модели с заполненными полями сохраняется в БД,
+используя стандартный метод репозитория Spring Data JPA:
+```java
+    //Метод создания счета
+    @Transactional
+    public AccountEntity createNewAccount(NewAccountDTO dto) {
+        //заполняем Entity объект данными из DTO
+        var account = new AccountEntity();
+        account.setCurrencyCode(dto.getCurrencyCode());
+        account.setUserId(dto.getUserId());
+        account.setBalance(new BigDecimal(0));
+        //Сохраняем объект в базу
+        var entityAccountObjectInBase = repository.save(account);
+        return entityAccountObjectInBase;
+    }
+```
+Сам метод возвращает объект нового аккаунта (счета), который будет сохранен в БД.
+
+Также данный класс сервиса [AccountCreateService.java](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Fservice%2FAccountCreateService.java) содержит
+реализацию ряда методов по работе со счетами:
+ - Метод пополнения счета: public AccountEntity addMoneyToAccount(String uid, Long accountId, Operation operation, BigDecimal money);
+ - Метод получения счета по идентификатору: public AccountEntity getAccountById(Long accountId);
+ - Метод получения списка всех счетов у одного конкретного пользователя по его Id: public List<AccountEntity>getAllAccountsForUser(Long id);
+ - Метод генерации события в Кафку: private AccountEvent createEvent(String uid, AccountEntity account, Long fromAccount, Operation operation, BigDecimal amount)
+
+Также разработан класс контроллера [ProcessingAccountController.java](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Fcontroller%2FProcessingAccountController.java) в пакете [controller](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Fcontroller),
+который позволяет по Rest передавать JSON для дальнейшего преобразования его в DTO объекты java, для использования 
+методов класса сервиса пользователем из его Веб интерфейса (Postman).
+Класс контроллера ProcessingAccountController имеет @RequestMapping("/processing"), а также
+содержит следующие методы:
+- Метод POST запроса на создание нвого счета: public AccountEntity createAccount(@RequestBody NewAccountDTO account, @RequestHeader String userId);
+- Метод PUT запроса на пополнение счета: public AccountEntity putMoney(@PathVariable(value = "id") Long accountId, @RequestBody PutMoneyToAccountDTO data);
+- Метод PUT запроса на перевод денежных средств с одного счета на другой: public BigDecimal exchangeCurrency (@PathVariable(value = "uid") String uid, @RequestBody ExchangeMoneyDTO data);
+- Метод GET запроса на получения списка всех счетов по идентификатору пользователя - userId: public List<AccountEntity> getAllAccountsForUser(@RequestHeader String userId).
 
 
 

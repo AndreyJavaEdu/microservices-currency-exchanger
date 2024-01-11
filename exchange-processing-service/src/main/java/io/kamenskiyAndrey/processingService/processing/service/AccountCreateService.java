@@ -73,7 +73,7 @@ public class AccountCreateService {
 
 
 
-    //Получения списка всех считов у одного Юзера по его Id
+    //Метод получения списка всех счетов у одного Юзера по его Id
     public List<AccountEntity>getAllAccountsForUser(Long id){
         return repository.findAllByUserId(id);
     }
