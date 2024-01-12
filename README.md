@@ -22,12 +22,12 @@ Spring Cloud Eureka обычно используется в среде микр
 в БД и хранение учетных. Также данный сервис реализует получение JWT токена пользователем и проверка токена (валидация).
 
 
-- [history-service](history-service) - микросервис по сохранению истории операций со 
-счетом конкретного пользователя в топик Кафки и из него в БД для хранения истории. Микросервис реализован на Kotlin.
+- [history-service](history-service) - микросервис по получению истории операций со 
+счетами конкретного пользователя из топика Кафки и сохранения событий в БД для хранения истории. Микросервис реализован на Kotlin.
 
 
 - [notification-bot](notification-bot) - Микросервис телеграмм бот, реализующий оповещение
-конкретного пользователя об операциях с денежными счетами.
+конкретного пользователя об операциях с денежными счетами. Микросервис реализован на Kotlin.
 
 
 - [gateway-service](gateway-service) - сервис Spring Cloud Gateway - это централизованная точка входа для 
@@ -269,6 +269,123 @@ public class NewAccountDTO {
 - Метод PUT запроса на пополнение счета: public AccountEntity putMoney(@PathVariable(value = "id") Long accountId, @RequestBody PutMoneyToAccountDTO data);
 - Метод PUT запроса на перевод денежных средств с одного счета на другой: public BigDecimal exchangeCurrency (@PathVariable(value = "uid") String uid, @RequestBody ExchangeMoneyDTO data);
 - Метод GET запроса на получения списка всех счетов по идентификатору пользователя - userId: public List<AccountEntity> getAllAccountsForUser(@RequestHeader String userId).
+
+В пакете [service](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Fservice)
+реализован класс-сервис [CurrencyService.java](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Fservice%2FCurrencyService.java) 
+получения котировок валют из Микросервиса котировок валют [rate_currency_service-master](rate_currency_service-master).
+В самом классе инжектится бин RestTemplate. В классе реализован метод принимающий код валюты (RUB, EUR и т.д.) и
+с помощью метода getForObject() вызванного на бине RestTemplate производится получение котировки валюты в зависимости 
+от кода валюты:
+```java
+ public BigDecimal loadCurrencyRate(String code){
+        return restClient.getForObject("http://CURRENCY-RATE-SERVICE/money/quotation/{code}", BigDecimal.class,  code);
+    }
+```
+Предварительно в конфигурационном классе [CloudConfig.java](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Fconfig%2FCloudConfig.java) 
+мы сконфигурировали и получили бин RestTemplate для использования его при инъекции в класс-сервис
+CurrencyService.
+
+Сама реализация перевода средств с одного счета на другой вынесена в отдельный класс-сервис
+[ExchangerService.java](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Fservice%2FExchangerService.java).
+Данный класс инжектит бины [CurrencyService.java](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Fservice%2FCurrencyService.java) и
+[AccountCreateService.java](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Fservice%2FAccountCreateService.java).
+В данном классе-сервисе реализован основной метод перевода валюты с одного счета на другой public BigDecimal exchangeCurrency(String uuid, Long fromAccount, Long toAccount, BigDecimal ammount),
+в котором прописаны возможные условия, которые могут возникнуть при обмене валют. Т.е.
+рассмотрены такие условия:
+- Проверка если код валюты на обоих счетах в РУБЛЯХ, то вызовется вспомогательный метод moneyTransferFromOneAccToOther();
+- Проверка если код валюты отправителя НЕ В РУБЛЯХ, а получателя в РУБЛЯХ, то вызывается вспомогательный метод exchangeWithDifferenceOfOneCurrCode();
+- Проверка если код валюты отправителя В РУБЛЯХ, а получателя НЕ В РУБЛЯХ, то вызывается вспомогательный метод также exchangeWithDifferenceOfOneCurrCode();
+- Проверка если код валюты отправителя не в рублях и получателя тоже не в рублях, то вызывается вспомогательный метод exchangeWithDifferenceOfAllCurrCode().
+Во спомогательных методах задействована логика уменьшения суммы с одного счета и увеличения на другом счете,
+используя метод addMoneyToAccount() бина класса-сервиса [AccountCreateService.java](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Fservice%2FAccountCreateService.java).
+Основной метод данного сервиса получает в параметре идентификаторы id счета отправителя и счета
+получателя:
+```java
+@Transactional(isolation = Isolation.REPEATABLE_READ)
+    public BigDecimal exchangeCurrency(String uuid, Long fromAccount, Long toAccount, BigDecimal ammount) {
+        AccountEntity source = service.getAccountById(fromAccount); //получаем объект счета котрый будет отправлять сумму на другой счет
+        AccountEntity target = service.getAccountById(toAccount); // объект счета который будет получать деньги с другого счета
+```
+Параметр String uuid нужен для обеспечения идемпотентности данной операции.
+Итак в классе-контроллере [ProcessingAccountController.java](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Fcontroller%2FProcessingAccountController.java)
+метод exchangeCurrency() представляет Рест интерфейс для пользователя для перевода денежных средств используя адрес
+"http://localhost:8080/processing/exchange/{uid}":
+```java
+  //Метод PUT запроса на перевод денежных средств с одного счета на другой
+    @PutMapping(path = "/exchange/{uid}")
+    public BigDecimal exchangeCurrency (@PathVariable(value = "uid") String uid, @RequestBody ExchangeMoneyDTO data){
+        return exchangerService.exchangeCurrency(uid, data.getFromAccountId(), data.getToAccountId(), data.getAmount());
+    }
+```
+Запрос пользователем будет передан через общий порт шлюза gateway 8080. В запросе пользователь должен передать данные в виде 
+JSON типа:
+```json
+{
+    "uid": "379e5cb3-247f-4385-81ff-6a67d0ecfc9b234",
+    "from": 3,
+    "to": 5,
+    "money": 500
+}
+```
+JSON преобразуется в объект [ExchangeMoneyDTO.java](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Fdto%2FExchangeMoneyDTO.java).
+
+
+<details><summary>Рассмотрим демонстрацию работы Микросервиса процессинга. Для этого необходимо запустить контейнер postgres,
+сервис Eureka, микросервис шлюз Spring Cloud Gateway, контейнер Apache Kafka, микросервис регистрации и аутентификации identity-service, 
+сам микросервис процессинга и микросервис котировок валют:</summary>
+
+1. Регистрация пользователя с именем Misha с помощью микросервиса аутентификации и регистрации:
+
+![1.Регистрация нового пользователя.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/demonstration_of_processing_service/1.%D0%A0%D0%B5%D0%B3%D0%B8%D1%81%D1%82%D1%80%D0%B0%D1%86%D0%B8%D1%8F%20%D0%BD%D0%BE%D0%B2%D0%BE%D0%B3%D0%BE%20%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D0%B5%D0%BB%D1%8F.png);
+ 
+2. Видим, что пользователь Misha сохранился в БД сервиса аутентификации 
+и регистрации после его регистрации и его id = 14:
+
+![2.Пользователь Миша в БД сервиса identity после регистрации.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/demonstration_of_processing_service/2.%D0%9F%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D0%B5%D0%BB%D1%8C%20%D0%9C%D0%B8%D1%88%D0%B0%20%D0%B2%20%D0%91%D0%94%20%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%B0%20identity%20%D0%BF%D0%BE%D1%81%D0%BB%D0%B5%20%D1%80%D0%B5%D0%B3%D0%B8%D1%81%D1%82%D1%80%D0%B0%D1%86%D0%B8%D0%B8.png);
+
+3. Получаем JWT токен для пользователя Misha из микросервиса регистрации и аутентификации
+   (в payload JWT токена содержится информация об id пользователя, которая будет добавлена к запросу
+с помощью фильтра в Gateway микросервисе):
+
+![3.Получаем токен для Миши из identity сервиса.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/demonstration_of_processing_service/3.%D0%9F%D0%BE%D0%BB%D1%83%D1%87%D0%B0%D0%B5%D0%BC%20%D1%82%D0%BE%D0%BA%D0%B5%D0%BD%20%D0%B4%D0%BB%D1%8F%20%D0%9C%D0%B8%D1%88%D0%B8%20%D0%B8%D0%B7%20identity%20%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%B0.png);
+
+4. Теперь пользователь отправляет запрос в микросервис процессинга на создание нового счета, при этом
+добавив Хедер Authorization, тполученный ранее токен как Bearer:
+
+![4.Создание Счета 1 для Миши.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/demonstration_of_processing_service/4.%D0%A1%D0%BE%D0%B7%D0%B4%D0%B0%D0%BD%D0%B8%D0%B5%20%D0%A1%D1%87%D0%B5%D1%82%D0%B0%201%20%D0%B4%D0%BB%D1%8F%20%D0%9C%D0%B8%D1%88%D0%B8.png);
+
+5. Теперь пользователь Misha отправляет запрос на пополнение счета на 15000 рублей в микросервис процессинга:
+
+![5.Пополнили счет 1 Миши на 15000.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/demonstration_of_processing_service/5.%D0%9F%D0%BE%D0%BF%D0%BE%D0%BB%D0%BD%D0%B8%D0%BB%D0%B8%20%D1%81%D1%87%D0%B5%D1%82%201%20%D0%9C%D0%B8%D1%88%D0%B8%20%D0%BD%D0%B0%2015000.png);
+
+6. Демонстрация, что первый счет пользователя с именем Misha сохранился в БД и на нем сумма 15000 руб.:
+
+![6.Этот счет 1 с id=19  сохранился в БД.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/demonstration_of_processing_service/6.%D0%AD%D1%82%D0%BE%D1%82%20%D1%81%D1%87%D0%B5%D1%82%201%20%D1%81%20id%3D19%20%20%D1%81%D0%BE%D1%85%D1%80%D0%B0%D0%BD%D0%B8%D0%BB%D1%81%D1%8F%20%D0%B2%20%D0%91%D0%94.png);
+
+7. Далее пользователь Misha создает еще один счет, без пополнения, отправив запрос в микросервис процессинга:
+
+![7.Создан Счет 2 для пользователя Миша.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/demonstration_of_processing_service/7.%D0%A1%D0%BE%D0%B7%D0%B4%D0%B0%D0%BD%20%D0%A1%D1%87%D0%B5%D1%82%202%20%D0%B4%D0%BB%D1%8F%20%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D0%B5%D0%BB%D1%8F%20%D0%9C%D0%B8%D1%88%D0%B0.png);
+
+8. Демонстрация, второй счет сохранился в БД с нулевым балансом, id = 20:
+
+![8.Новый счет 2 сохранился в БД с нулевым балансом.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/demonstration_of_processing_service/8.%D0%9D%D0%BE%D0%B2%D1%8B%D0%B9%20%D1%81%D1%87%D0%B5%D1%82%202%20%D1%81%D0%BE%D1%85%D1%80%D0%B0%D0%BD%D0%B8%D0%BB%D1%81%D1%8F%20%D0%B2%20%D0%91%D0%94%20%D1%81%20%D0%BD%D1%83%D0%BB%D0%B5%D0%B2%D1%8B%D0%BC%20%D0%B1%D0%B0%D0%BB%D0%B0%D0%BD%D1%81%D0%BE%D0%BC.png);
+
+9. Далее пользователь делает запрос в микросервис 
+процессинга на перевод 5000 рублей со счета с id=19 на счет с id=20:
+
+![9.Перевели с счета 1 на счет 2 Миши 5000 р..png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/demonstration_of_processing_service/9.%D0%9F%D0%B5%D1%80%D0%B5%D0%B2%D0%B5%D0%BB%D0%B8%20%D1%81%20%D1%81%D1%87%D0%B5%D1%82%D0%B0%201%20%D0%BD%D0%B0%20%D1%81%D1%87%D0%B5%D1%82%202%20%D0%9C%D0%B8%D1%88%D0%B8%205000%20%D1%80..png);
+
+10. Демонстрация, то что перевод средств был произведен, значение баланса на счесте с id=19 уменьшилось
+на 5000 руб., при этом значение баланса на счете с id=20 увеличилось, причем произошла конвертация валюты из RUB
+в EUR (логика написана в классе-сервисе [ExchangerService.java](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Fservice%2FExchangerService.java)):
+
+![10.Перевод денежных средств отобразился в БД.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/demonstration_of_processing_service/10.%D0%9F%D0%B5%D1%80%D0%B5%D0%B2%D0%BE%D0%B4%20%D0%B4%D0%B5%D0%BD%D0%B5%D0%B6%D0%BD%D1%8B%D1%85%20%D1%81%D1%80%D0%B5%D0%B4%D1%81%D1%82%D0%B2%20%D0%BE%D1%82%D0%BE%D0%B1%D1%80%D0%B0%D0%B7%D0%B8%D0%BB%D1%81%D1%8F%20%D0%B2%20%D0%91%D0%94.png);
+
+11. Далее пользователем был сделан запрос в микросервис процессинга на получение списка его всех счетов:
+
+![11.Сделан запрос на получение списка счетов у Миши.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/demonstration_of_processing_service/11.%D0%A1%D0%B4%D0%B5%D0%BB%D0%B0%D0%BD%20%D0%B7%D0%B0%D0%BF%D1%80%D0%BE%D1%81%20%D0%BD%D0%B0%20%D0%BF%D0%BE%D0%BB%D1%83%D1%87%D0%B5%D0%BD%D0%B8%D0%B5%20%D1%81%D0%BF%D0%B8%D1%81%D0%BA%D0%B0%20%D1%81%D1%87%D0%B5%D1%82%D0%BE%D0%B2%20%D1%83%20%D0%9C%D0%B8%D1%88%D0%B8.png).
+
+</details>
 
 
 
