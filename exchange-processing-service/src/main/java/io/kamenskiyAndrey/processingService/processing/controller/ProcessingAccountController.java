@@ -21,7 +21,7 @@ public class ProcessingAccountController {
     private final AccountCreateService service;
     private final ExchangerService exchangerService;
 
-    //Метод POST запроса на создание нвого счета
+    //Метод POST запроса на создание нового счета
     @PostMapping(path = "/account")
     public AccountEntity createAccount(@RequestBody NewAccountDTO account, @RequestHeader String userId){
         Long userIdfromHeader = Long.valueOf(userId);
