@@ -304,8 +304,9 @@ CurrencyService.
 ```java
 @Transactional(isolation = Isolation.REPEATABLE_READ)
     public BigDecimal exchangeCurrency(String uuid, Long fromAccount, Long toAccount, BigDecimal ammount) {
-        AccountEntity source = service.getAccountById(fromAccount); //получаем объект счета котрый будет отправлять сумму на другой счет
-        AccountEntity target = service.getAccountById(toAccount); // объект счета который будет получать деньги с другого счета
+    AccountEntity source = service.getAccountById(fromAccount); //получаем объект счета котрый будет отправлять сумму на другой счет
+    AccountEntity target = service.getAccountById(toAccount); // объект счета который будет получать деньги с другого счета
+}
 ```
 Параметр String uuid нужен для обеспечения идемпотентности данной операции.
 Итак в классе-контроллере [ProcessingAccountController.java](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Fcontroller%2FProcessingAccountController.java)
@@ -388,15 +389,74 @@ JSON преобразуется в объект [ExchangeMoneyDTO.java](exchange
 
 </details>
 
-### 3. Сервис регистрации и обнуружения микросервисов - Spring Cloud Eureka
+### 3. Сервис регистрации и обнуружения микросервисов - Spring Cloud Eureka ([eureka-service](eureka-service))
 Когда у нас большое количество микросервисов, то при их развертывании нам
 необходимо ими управлять и контролировать их состояние.
+
+Техлогии и библиотеки: spring-boot-starter 3.2.0, spring-cloud-starter-netflix-eureka-server.
+
+Преимущества использования Spring Cloud Eureka:
+- регистрация микросервисов;
+- возможность получения ip-адреса сервиса;
+- балансировка нагрузки между модулями (т.е. можно именно по имени микосервиса,
+когда у нас много его инсталяций, маршрутизировать нагрузку - это важно для работы балансировщика нагрузки).
 
 Схема работы сервиса обнаружения:
 
 ![Диаграмма Spring Cloud Eureka.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/Spring%20cloud%20Eureka/%D0%94%D0%B8%D0%B0%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B0%20Spring%20Cloud%20Eureka.png)
 
-Техлогии и библиотеки: spring-boot-starter 3.2.0, spring-cloud-starter-netflix-eureka-server.
+Принцип действия данного сервера Eureka: все микросервисы отправляют
+в Service Registry свои имя, хост, порт и ip-адрес. Потребитель же этой информации,
+например Маршрутизатор уже по имени сервиса забирает его информацию и использует и передает по назначению.
+
+В самом приложении класс запуска [EurekaServiceApplication.java](eureka-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fdiscovery%2FEurekaServiceApplication.java) 
+аннотирован аннотацией @EnableEurekaServer, которая показывает, что данный сервис является
+сервером Eureka:
+```java
+@SpringBootApplication
+@EnableEurekaServer
+public class EurekaServiceApplication {
+
+   public static void main(String[] args) {
+      SpringApplication.run(EurekaServiceApplication.class, args);
+   }
+}
+```
+Настройка в [application.yml](eureka-service%2Fsrc%2Fmain%2Fresources%2Fapplication.yml):
+```yaml
+server:
+  port: 8761
+
+spring:
+  application:
+    name: eureka-service
+
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+
+  instance:
+    prefer-ip-address: true
+```
+Т.к. это сервер, то мы назначили ему порт 8761 (порт по умолчанию).
+Задали имя приложения - eureka-service.
+Также в настройке мы отключили регистрацию данного приложения на сервере, т.к. это сам Сервер (register-with-eureka: false).
+И отключили настройку получение информации о регистрации, как клиента данное приложение (fetch-registry: false).
+
+После запуска приложения и переходе по адресу http://localhost:8761 
+мы увидим, что сервис Eureka запустился, но зарегистрированные приложения отсутствуют:
+
+![Start Eureka Server.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/Spring%20cloud%20Eureka/Start%20Eureka%20Server.png)
+
+![Start Eureka 2.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/Spring%20cloud%20Eureka/Start%20Eureka%202.png)
+
+
+
+
+
+
+
 
 
 
