@@ -451,6 +451,100 @@ eureka:
 
 ![Start Eureka 2.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/Spring%20cloud%20Eureka/Start%20Eureka%202.png)
 
+Чтобы наши микросервисы регистрировались на сервере Eureka, В каждом приложении была добавилена в pom.xml 
+зависимость:
+```xml
+<dependencies>
+   <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+   </dependency>
+</dependencies>
+
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-dependencies</artifactId>
+            <version>${spring-cloud.version}</version>
+            <type>pom</type>
+             <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+
+<repositories>
+    <repository>
+        <id>spring-milestones</id>
+        <name>Spring Milestones</name>
+        <url>https://repo.spring.io/milestone</url>
+        <snapshots>
+        <enabled>false</enabled>
+        </snapshots>
+    </repository>
+</repositories>
+
+```
+Чтобы Spring понял, что мы хотим зарегистрировать наши микросервисы в Eureka сервисе
+была добавлена аннотация над классом старта каждого микросервиса - @EnableDiscoveryClient (посмотрим на примере [exchange-processing-service](exchange-processing-service)):
+```java
+@SpringBootApplication
+@EnableDiscoveryClient
+public class ExchangeProcessingApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(ExchangeProcessingApplication.class, args);
+	}
+}
+```
+В каждом микросервисе (клиенте Eureka) мы указали куда необходимо отправлять данные о регистрации 
+текущего сервиса,
+путем добавления настройки в конфигурационный файл [application.yml](exchange-processing-service%2Fsrc%2Fmain%2Fresources%2Fapplication.yml) - 
+это мы указали в настроке defaultZone: http://${cloud.eureka-host}:8761/eureka/:
+```yaml
+server:
+   port: 8090 
+spring:
+   application:
+      name: exchange-processing-service
+cloud:
+   db-host: localhost
+   eureka-host: localhost
+   kafka-host: localhost
+eureka:
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://${cloud.eureka-host}:8761/eureka/
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+```
+Когда параметр "fetch-registry" установлен в значение "true", 
+клиент Eureka будет периодически обновлять список доступных экземпляров служб, 
+связанных с ним. Это позволяет клиентам Eureka динамически обнаруживать и подключаться 
+к другим службам, участвующим в реестре Eureka.
+Параметр конфигурации "register-with-eureka" в контексте Eureka определяет, должен ли клиент
+регистрироваться в реестре Eureka. Установка этого параметра в значение "true" указывает 
+клиенту Eureka на необходимость зарегистрировать самого себя в реестре, чтобы другие службы 
+могли обнаруживать его.
+
+
+
+### 4. Сервис Spring Cloud Gateway - [gateway-service](gateway-service)
+
+У нас есть единая точка доступа для всех микросервисов от клиента - в нашем случае это Rest интерфейс, 
+вызываемый web приложением. А сервисов у нас очень много и сервисный шлюз gateway действует, как посредник
+между web-клиентом (Postman) и вызываемыми службами. Клиент обращается только к одному url,
+который принадлежит сервесному шлюзу gateway, а уже этот шлюз анализирует путь указанный клиентом
+(например, смотря что указано в пути - currency или processing) и определяет какую службу ему вызвать.
+
+Для реализации шлюза используется проект Spring Cloud Gateway.
+
+Схема работы сервиса обнаружения:
+
 
 
 
