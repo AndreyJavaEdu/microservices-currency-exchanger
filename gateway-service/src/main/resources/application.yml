@@ -53,11 +53,7 @@ spring:
             - Path=/history/**
           filters:
             - AuthenticationFilter
-# Авторизация сервиса в Spring cloud Eureka
-#eureka:
-#  client:
-#    service-url:
-#      defaultZone: http://${cloud.eureka-host}:8761/eureka
+
 eureka:
   client:
     fetch-registry: true

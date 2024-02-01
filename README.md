@@ -544,6 +544,82 @@ eureka:
 Для реализации шлюза используется проект Spring Cloud Gateway.
 
 Схема работы сервиса обнаружения:
+![Диаграмма без названия.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/Gateway/%D0%94%D0%B8%D0%B0%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B0%20%D0%B1%D0%B5%D0%B7%20%D0%BD%D0%B0%D0%B7%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F.png)
+
+Техлогии и библиотеки: spring-boot-starter 3.2.0, spring-cloud-starter-gateway, spring-cloud-starter-netflix-eureka-client,
+lombok, зависимости для работы с jjwt (jjwt-api, jjwt-impl, jjwt-jackson).
+
+<details><summary>В конфигурационном файле application.yml мы указали порт по которому шлюз принимает запросы,
+а также настроить роутинг - правила по которым бы будем маршрутизировать наши запросы на
+конкретные микросервисы:</summary>
+
+```yaml
+# Общий Порт шлюза gateway
+server:
+  port: 8080
+
+# Имя сервиса Spring cloud gateway
+spring:
+   application:
+      name: api-gateway-service
+
+   # Роутинг сервисов
+   cloud:
+      gateway:
+         discovery:
+            locator:
+               enabled: true
+               lower-case-service-id: true
+         routes:
+            - id: currency-rate-service
+              uri: ${cloud.currency-service-url}
+              predicates:
+                 - Path=/money/**
+              filters:
+                 - AuthenticationFilter
+
+            - id: exchange-processing-service
+              uri: ${cloud.processing-service-url}
+              predicates:
+                 - Path=/processing/**
+              filters:
+                 - AuthenticationFilter
+
+            - id: identity-service
+              uri: ${cloud.identity-service-url}
+              predicates:
+                 - Path=/auth/**
+
+            - id: account-history-service
+              uri: ${cloud.account-history-service-url}
+              predicates:
+                 - Path=/history/**
+              filters:
+                 - AuthenticationFilter
+
+eureka:
+   client:
+      fetch-registry: true
+      register-with-eureka: true
+      service-url:
+         defaultZone: http://${cloud.eureka-host}:8761/eureka/
+   instance:
+      hostname: localhost
+      prefer-ip-address: true
+      instance-id: ${spring.application.name}:${server.port}
+# Видимость логов при обращении к сервисам
+logging:
+   level:
+      org.springframework.cloud.gateway: DEBUG
+```
+С помощью параметра конфигурации predicates мы указываем часть url, который содержит ключевое слово, например predicates
+и это будет означать что шлюз перенаправит запрос по url указанному в параметре uri.
+</details>
+
+Демонстрация работы маршрутизатора:
+
+Вместо конкретных url и портов отдельных сервисов мы указываем один порт маршрутизатора 
+spring gateway.
 
 
 
