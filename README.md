@@ -648,6 +648,13 @@ spring gateway и происходит маршрутизация и перен�
 
 
 
+### 5. Микросервис регистрации и авторизации - [identity-service-new](identity-service-new)
+
+Техлогии и библиотеки: spring-boot-starter 3.0.4, spring-boot-starter-security, 
+spring-cloud-starter-netflix-eureka-client,
+lombok, зависимости для работы с jjwt (jjwt-api, jjwt-impl, jjwt-jackson), spring-boot-starter-web,
+postgresql, flyway-core.
+
 
 
 
