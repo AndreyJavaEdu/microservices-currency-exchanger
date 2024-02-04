@@ -619,7 +619,35 @@ logging:
 Демонстрация работы маршрутизатора:
 
 Вместо конкретных url и портов отдельных сервисов мы указываем один порт маршрутизатора 
-spring gateway.
+spring gateway и происходит маршрутизация и перенаправление на конкретный микросервис.
+
+![Демонстрация маршрутизации в сервис котировок 1.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/Gateway/%D0%94%D0%B5%D0%BC%D0%BE%D0%BD%D1%81%D1%82%D1%80%D0%B0%D1%86%D0%B8%D1%8F%20%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B%20%D1%88%D0%BB%D1%8E%D0%B7%D0%B0/%D0%94%D0%B5%D0%BC%D0%BE%D0%BD%D1%81%D1%82%D1%80%D0%B0%D1%86%D0%B8%D1%8F%20%D0%BC%D0%B0%D1%80%D1%88%D1%80%D1%83%D1%82%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D0%B8%20%D0%B2%20%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%20%D0%BA%D0%BE%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%BE%D0%BA%201.png)
+
+![Демонстрация маршрутизация в сервис аутентификации 2.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/Gateway/%D0%94%D0%B5%D0%BC%D0%BE%D0%BD%D1%81%D1%82%D1%80%D0%B0%D1%86%D0%B8%D1%8F%20%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B%20%D1%88%D0%BB%D1%8E%D0%B7%D0%B0/%D0%94%D0%B5%D0%BC%D0%BE%D0%BD%D1%81%D1%82%D1%80%D0%B0%D1%86%D0%B8%D1%8F%20%D0%BC%D0%B0%D1%80%D1%88%D1%80%D1%83%D1%82%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F%20%D0%B2%20%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%20%D0%B0%D1%83%D1%82%D0%B5%D0%BD%D1%82%D0%B8%D1%84%D0%B8%D0%BA%D0%B0%D1%86%D0%B8%D0%B8%202.png)
+
+![Демонстрация маршрутизации в сервис процессинга 3.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/Gateway/%D0%94%D0%B5%D0%BC%D0%BE%D0%BD%D1%81%D1%82%D1%80%D0%B0%D1%86%D0%B8%D1%8F%20%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B%20%D1%88%D0%BB%D1%8E%D0%B7%D0%B0/%D0%94%D0%B5%D0%BC%D0%BE%D0%BD%D1%81%D1%82%D1%80%D0%B0%D1%86%D0%B8%D1%8F%20%D0%BC%D0%B0%D1%80%D1%88%D1%80%D1%83%D1%82%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D0%B8%20%D0%B2%20%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%20%D0%BF%D1%80%D0%BE%D1%86%D0%B5%D1%81%D1%81%D0%B8%D0%BD%D0%B3%D0%B0%203.png)
+
+
+В самом сервисе Gateway мы реализовали кастомный класс фильтра запросов [AuthenticationFilter.java](gateway-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fgateway%2Ffilter%2FAuthenticationFilter.java),
+который наследуется от абстрактного класса [AuthenticationFilter.java](gateway-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fgateway%2Ffilter%2FAuthenticationFilter.java).
+В данном классе реализован метод фильтра apply(), в котором мы проверяем в условии if содержит 
+ли запрос клиента  url на регистрацию, получение токена, а также обращение к сервису eureka.
+Данные url запросы не имеют авторизацию и поэтому это проверяется
+во вспомогательном 
+методе isSecured класса [RouteValidator.java](gateway-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fgateway%2Ffilter%2FRouteValidator.java).
+Далее в фильтре проверяется содержит ли запрос пользователя Хэдер c меткой AUTHORIZATION,
+и если содержит, то мы получаем этот Хэдер и отрезаем от него часть строки Bearer с пробелом,
+т.е. возвращаем строку которая начинается с 7 индекса Хэдера. Полученная строка и есть токен, который сгенерирован в сервисе
+регистрации и аутентификации [identity-service-new](identity-service-new) и далее пытаемся произвести валидацию данного токена.
+Если валидация токена успешна, то изменяем запрос посредством метода mutate и добавляем в Хэдер запроса
+уже UserId извлеченный из токена с помощью вспомогательного класса [JWTUtil.java](gateway-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fgateway%2Futil%2FJWTUtil.java),
+в котором реализован метод public Integer extractUserId(String token) получения значения UserId.
+Тем самым посредством реализованного кастомного фильтра Spring Cloud Gateway производится
+проверка каждого запроса пользователя на валидность и к запросу добавляется Хэдер
+со значением UserId, который используется далее в параметрах методов контроллеров микросервисов.
+
+
+
 
 
 
