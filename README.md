@@ -772,7 +772,49 @@ public void validateToken(String token){
 ```
 Этот JSON преобразуется в объект DTO, в объект класса [AddNewUserDTO.java](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fdto%2FAddNewUserDTO.java), который мы также создали
 в пакете [dto](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fdto).
+- POST - public String getToken(@RequestBody GetTokenCredititialsDTO data) - это метод 
+получения токена зарегистрированным пользователем. 
+- GET - public String validateToken(@RequestParam(name = "token") String token) - метод валидации токена.
+Этот метод аннотирован аннотацией @GetMapping("/validate"). Данный метод принимает
+токен из параметра запроса, т.е. параметр самого метода связан с параметром запроса аннотацией @RequestParam.
 
+Поскольку мы внедрили систему безопасности Spring Security по умолчанию, данная
+система позволяет передавать имя пользователя и пароль для доступа к конкретному эндпоинту
+который в Рест-контроллере. Spring Security будет производить аутентификацию для каждой
+конкретного эндпоинта по умолчанию и при вводе имя пользователя и пароля будет происходить ошибка.
+И никто не сможет правильно получить доступ к эндпоинтам в Рест-контроллере. Чтобы этого не происходило мы произвели обход проверки аутентификации эндпоинтов в Рест-контроллере.
+Для этого класс конфигурации [AuthConfig.java](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fconfig%2FAuthConfig.java)
+помечен аннотацией @EnableWebSecurity. И в данном классе конфигурации мы определили
+цепочку фильтров безопасности:
+```java
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        return http.csrf().disable() //отключили защиту от CSRF атак, т.к. используем токены JWT
+                .authorizeHttpRequests() //Конфигурируем цепочкой следующих методов политику авторизации (сюда входит настройка ролей)
+                //тут указали правила авторизации, для определенных эндпоитов разрешили для всех пользователей без авторизации и аутентификации
+                .requestMatchers("/auth/registration", "/auth/token", "/auth/validate").permitAll()
+                .and()
+                .build();
+    }
+```
+С помощью метода permitAll() мы  разрешения 
+доступ к эндпоинтам определенным в Рест-контроллере [AuthController.java](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fcontroller%2FAuthController.java) 
+без необходимости аутентификации. 
+
+Данный микросервис мы также зарегистрировали в качестве клиента Eureka:
+```yaml
+spring:
+   application:
+      name: Authentificational-service
+
+eureka:
+   client:
+      service-url:
+         defaultZone: http://${cloud.eureka-host}:8761/eureka
+
+server:
+   port: 9797
+```
 
 
 
