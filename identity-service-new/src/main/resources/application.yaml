@@ -2,6 +2,8 @@ cloud:
   db-host: localhost
   eureka-host: localhost
 
+jwtService:
+  secret: "087F23A66DEE433829D5EB642EA91A0D7C2AE1E0CF1F30B2041EAB3465898840"
 
 
 spring:

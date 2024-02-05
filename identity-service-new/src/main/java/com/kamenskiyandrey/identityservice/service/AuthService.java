@@ -22,7 +22,7 @@ public class AuthService {
         var credential = new UserCredential();
         credential.setName(dto.getUserName());
         credential.setEmail(dto.getEmail());
-        credential.setPassword(passwordEncoder.encode(dto.getPassword())); //Извлекди пароль, закодировали и поместили в объект UserCredential
+        credential.setPassword(passwordEncoder.encode(dto.getPassword())); //Извлекли пароль, закодировали и поместили в объект UserCredential
         repository.save(credential); //хранить пароль нужно закодированным, поэтому создадим специальный кодировщик
         return "user added to the system";
     }

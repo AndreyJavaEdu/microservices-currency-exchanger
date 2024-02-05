@@ -648,12 +648,131 @@ spring gateway и происходит маршрутизация и перен�
 
 
 
-### 5. Микросервис регистрации и авторизации - [identity-service-new](identity-service-new)
+### 5. Микросервис регистрации и аутентификации - [identity-service-new](identity-service-new)
 
 Техлогии и библиотеки: spring-boot-starter 3.0.4, spring-boot-starter-security, 
 spring-cloud-starter-netflix-eureka-client,
 lombok, зависимости для работы с jjwt (jjwt-api, jjwt-impl, jjwt-jackson), spring-boot-starter-web,
 postgresql, flyway-core.
+
+![Схема работы isentity сервиса.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/Identity/%D0%A1%D1%85%D0%B5%D0%BC%D0%B0%20%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B%20isentity%20%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%B0.png)
+
+Данный микросервис настроен, как клиент для регистрации на сервире Eureka:
+```yaml
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${cloud.eureka-host}:8761/eureka
+```
+Также настроена конфигурация для подключения к БД и миграция с помощью flyway:
+```yaml
+spring:
+  datasource:
+    url: jdbc:postgresql://${cloud.db-host}:5433/security
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+
+  flyway:
+    enabled: true
+    locations: classpath:db
+    user: postgres
+    password: password
+    url: jdbc:postgresql://${cloud.db-host}:5433/security
+```
+В пакете [entity](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fentity)
+реализован класс сущности [UserCredential.java](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fentity%2FUserCredential.java)
+в котором определены поля такие как идентификатор пользователя (id), имя пользователя (name), почта пользователя (email),
+пароль пользователя (password). Каждое поле замаплено на таблицу БД. Также поле id аннотировано аннотацией @Id, которая
+показывает, что в таблице БД столбец связанный с данным полем является Primary key. У поля id определена стратегия
+генерации - @GeneratedValue(strategy = GenerationType.IDENTITY) - полагается на автоматическое увеличение значения столбца по правилам, прописанных в БД.
+Также аннотировали каждое поле данного класса аннотацией @Column и прописали имена столбцев таблицы в БД, которые соответствуют полям класса.
+
+В пакете [repository](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Frepository)
+создан интерфейс репозитория [UserCredentialRepository.java](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Frepository%2FUserCredentialRepository.java),
+который унаследовали от JpaRepository<UserCredential, Integer>.
+
+В пакете [service](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fservice)
+мы создали класс сервиса [AuthService.java](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fservice%2FAuthService.java),
+пометив его аннотацией @Service. В данном классе заинжектили бин репозитория. В данном классе сервиса реализован
+метод регистрации пользователя (сохранения пользователя в БД с именем security):
+```java
+   @Transactional
+    public String saveUser(AddNewUserDTO dto){
+        var credential = new UserCredential();
+        credential.setName(dto.getUserName());
+        credential.setEmail(dto.getEmail());
+        credential.setPassword(passwordEncoder.encode(dto.getPassword())); //Извлекли пароль, закодировали и поместили в объект UserCredential
+        repository.save(credential); //хранить пароль нужно закодированным, поэтому создадим специальный кодировщик
+        return "user added to the system";
+    }
+```
+В данном методе при записи пароля пользователя в БД, сначало пароль извлекается из dto, далее кодируется
+с помощью метода encode() вызванного на бине кодировщика паролей и помещается в объект UserCredential.
+Также данный сервис инжектит бин JWTService, с помощью которого реализуются еще два метода:
+- Метод который генерирует токен для пользователя по его имени (generateToken()).
+```java
+  public String generateToken(String userName){
+        return jwtService.generateToken(userName);
+    }
+```
+- Метод проверки, валидации токена (validateToken()) - используем метод ранее созданного 
+класса, который мы заинжектили, как бин jwtService.
+```java
+public void validateToken(String token){
+        jwtService.validateToken(token);
+    }
+```
+
+Чтобы работал кодировщик паролей и в БД записывался пароль 
+уже закодированном формате, мы определили
+в классе конфигурации [AuthConfig.java](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fconfig%2FAuthConfig.java)
+в пакете [config](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fconfig)
+бин PasswordEncoder:
+```java
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+```
+В самом классе конфигурации [AuthConfig.java](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fconfig%2FAuthConfig.java)
+мы указали какой url мы можем обойти (не использовать аутентификацию), а какой url мы должны обязательно
+подвергать аутентификации.
+
+Для того чтобы сгенерировать JWT токен и проверить его был реализован класс
+[JWTService.java](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fservice%2FJWTService.java).
+В данном вспомогательном классе сервисе используется библиотека JWT (jjwt-api, jjwt-impl, jjwt-jackson). Также
+мы определили секретный 32-бит ключ, сгенерировав его заранее. Значение данного секрета вынесено в application.yml.
+В данном классе реализованы следующие методы:
+- public void validateToken(final String token) - метод валидации токена.
+- public String generateToken(String userName) - метод генерации токена, который вызывает вспомогательный метод
+с помощью которого формируется сам токен;
+- private String createToken(Map<String, Object> claims, String userName) - метод создания токена и заполнения
+его payload (заполняем полезную нагрузку JWT, установливаем время создания токена в payload JWT, установили время после которого токен нельзя использовать,
+присваивается подпись и создается сам токен JWT);
+- private Key getSignKey() -  принимает закрытый ключ (SECRET) в формате BASE64, декодирует его, 
+создает ключ HMAC с использованием декодированных байтов и возвращает полученный ключ. Этот ключ используется для создания 
+подписи JWT токена с алгоритмом HS256, который мы указали при создании токена в предыдущем методе.
+
+Все три метода, которые мы реализовали в классе сервисе [AuthService.java](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fservice%2FAuthService.java)
+мы должны вызвать в классе Рест-контроллере, который мы также реализовали - [AuthController.java](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fcontroller%2FAuthController.java).
+Данный контроллер аннотирован, как @RequestMapping("/auth"), тем самым мы назначили
+корневой url для всех запросов в данный микросервис.
+В данном Рест-контроллере мы заинжектили бины AuthService и AuthenticationManager.
+Бин AuthenticationManager мы сконфигурировали в классе конфигурации.
+Данный Рест-контроллер содержит следующие методы:
+- POST - public String addNewUser(@RequestBody AddNewUserDTO user) - Метод регистрации, добавления нового пользователя приложения.
+Данный метод аннотирован @PostMapping("/registration"), и пользователь при регистрации 
+должен ввести данные, которые должны быть предоставлены в виде JSON, например:
+```json
+{
+    "name": "Pasha",
+    "email": "pavel@yandex.ru",
+    "password": "1122"
+}
+```
+Этот JSON преобразуется в объект DTO, в объект класса [AddNewUserDTO.java](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fdto%2FAddNewUserDTO.java), который мы также создали
+в пакете [dto](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fdto).
+
 
 
 
