@@ -905,6 +905,21 @@ server:
 </details>
 
 
+### 6. микросервис по получению истории операций со счетами конкретного пользователя - [history-service](history-service)
+Данный микросервис написан на Kotlin.
+
+Техлогии и библиотеки: spring-boot-starter 3.2.0, spring-boot-starter-data-jpa,
+spring-cloud-starter-netflix-eureka-client,
+lombok, spring-boot-starter-web, jackson-module-kotlin, spring-kafka,
+postgresql, flyway-core.
+
+У нас есть сервис процессинга, который совершает какие то операции со счетом. События всех этих операций
+отправляется в виде сообщений в Kafka в виде JSON. И сервисы потребители ([history-service](history-service) и [notification-bot](notification-bot))
+будут из Kafka-очереди вычитывать сообщения и сохранять в БД и Web-клиент сможет их получать по Рест-интерфейсу.
+Т.е. модуль процессинга будет являться поставщиком сообщений, а модуль истории будет являться потребителем сообщений
+из Kafka, будет их забирать и отправлять в БД.
+
+![Схема работы.png](%D1%F5%E5%EC%FB%20%E4%EB%FF%20README%2FHistory%20service%2F%D1%F5%E5%EC%E0%20%F0%E0%E1%EE%F2%FB.png)
 
 
 
