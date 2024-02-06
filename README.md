@@ -740,7 +740,7 @@ public void validateToken(String token){
 
 Для того чтобы сгенерировать JWT токен и проверить его был реализован класс
 [JWTService.java](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fservice%2FJWTService.java).
-В данном вспомогательном классе сервисе используется библиотека JWT (jjwt-api, jjwt-impl, jjwt-jackson). Также
+В данном вспомогательном классе-сервисе используется библиотека JWT (jjwt-api, jjwt-impl, jjwt-jackson). Также
 мы определили секретный 32-бит ключ, сгенерировав его заранее. Значение данного секрета вынесено в application.yml.
 В данном классе реализованы следующие методы:
 - public void validateToken(final String token) - метод валидации токена.
@@ -773,7 +773,78 @@ public void validateToken(String token){
 Этот JSON преобразуется в объект DTO, в объект класса [AddNewUserDTO.java](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fdto%2FAddNewUserDTO.java), который мы также создали
 в пакете [dto](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fdto).
 - POST - public String getToken(@RequestBody GetTokenCredititialsDTO data) - это метод 
-получения токена зарегистрированным пользователем. 
+получения токена зарегистрированным пользователем. В данном методе могут получать 
+токен только те пользователи, которые уже зарегистрировались и их данные присутствуют в БД.
+Т.е. в данном методе мы реализовали процесс аутентификации пользователя (сравнение имя пользователя и пароля,
+введенных Юзером с теми которые уже имеются в БД). Для этого используется бин AuthenticationManager,
+который заранее получен как компонент в классе конфигурации [AuthConfig.java](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fconfig%2FAuthConfig.java):
+```java
+    //Определяем бин AuthenticationManager с помощью метода getAuthenticationManager класса AuthenticationConfiguration
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+```
+Сам метод выглядит так:
+```java
+    @PostMapping("/token")
+    public String getToken(@RequestBody GetTokenCredititialsDTO data) {
+        Authentication authenticate = authenticationManager
+                .authenticate(new UsernamePasswordAuthenticationToken(data.getUserName(), data.getPassword())); //Получаем объект типа Authentication характеризующий аунтефицирован пользователь или нет
+        if (authenticate.isAuthenticated()) { //Если пользователь аутентифицирован, то выполним генерацию токена
+            return service.generateToken(data.getUserName());
+        }else {
+            throw new RuntimeException("Invalid access");
+        }
+    }
+```
+Чтобы производилась аутентификация в методе getToken() мы определить специальный бин сведений о пользователе
+UserDetailsService в классе конфигурации:
+```java
+ @Bean
+    public UserDetailsService userDetailsService() {
+        return new CustomUserDetailService(repository);
+    }
+```
+В данном бине используем созданный нами кастомный класс CustomUserDetailService, который будет
+имплементировать интерфейс userDetailsService и подключиться к БД и передаст информацию о пользователе 
+в AuthenticationProvider, а он в свою очередь подключиться к AuthenticationManager-у. 
+Сам кастомный класс [CustomUserDetailService.java](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fconfig%2FCustomUserDetailService.java),
+который имплементирует интерфейс UserDetailsService содержит только один метод loadUserByUsername(String username)
+по загрузки пользователя по его имени:
+```java
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+       Optional<UserCredential> credential = repository.findByName(username); //Создали метод который ищет пользователя по имени в БД используя репозиторий
+        //Необходимо преобразовать объект типа UserCredential к объекту типа UserDetails и далее вернуть его в данном методе.
+        //Преобразование в объект CustomUserDetails делаем с помощью вызова конструктора в классе CustomUserDetails
+        //и проверяем существует ли такой объект с помощью orElseThrow.
+        return credential.map(CustomUserDetails::new).orElseThrow(() -> new UsernameNotFoundException("User not found with name" + username));
+    }
+```
+В этом методе с помощью бина репозитория UserCredentialRepository мы вызываем метод findByName()
+и получаем объект пользователя по типу Optional, т.к. может возникнуть ситуация, когда пользователь не найден.
+В методе реализовано преобразование из типа Optional в тип UserDetails. Для этого мы реализовали кастомный класс [CustomUserDetails.java](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fconfig%2FCustomUserDetails.java),
+который наследуется от UserDetails. В этом классе определили поля имя пользователя и пароль, а также определили конструктор,
+с помощью которого инициализация полей будет производиться из гетторов объекта UserCredential,
+тем самым и все поля учетных данных объекта UserDetails будут сопоставлены с полями UserDetails.
+Далее в методе loadUserByUsername() на объекте c типом Optional мы вызываем метод map в параметр которого передаем
+лямбда выражение сопоставления объектов и меняем объект обернутый в Optional с типом UserCredential на объект
+с типом CustomUserDetails (который по сути является UserDetails объектом).
+
+В классе конфигурации [AuthConfig.java](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fconfig%2FAuthConfig.java) также определен бин AuthenticationProvider:
+```java
+    //Определили бин провайдера AuthenticationProvider, который реализован на основе класса DaoAuthenticationProvider
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
+        daoAuthenticationProvider.setUserDetailsService(userDetailsService());
+        daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
+        return daoAuthenticationProvider;
+    }
+```
+
+
 - GET - public String validateToken(@RequestParam(name = "token") String token) - метод валидации токена.
 Этот метод аннотирован аннотацией @GetMapping("/validate"). Данный метод принимает
 токен из параметра запроса, т.е. параметр самого метода связан с параметром запроса аннотацией @RequestParam.
@@ -797,7 +868,7 @@ public void validateToken(String token){
                 .build();
     }
 ```
-С помощью метода permitAll() мы  разрешения 
+С помощью метода permitAll() мы разрешили 
 доступ к эндпоинтам определенным в Рест-контроллере [AuthController.java](identity-service-new%2Fsrc%2Fmain%2Fjava%2Fcom%2Fkamenskiyandrey%2Fidentityservice%2Fcontroller%2FAuthController.java) 
 без необходимости аутентификации. 
 
@@ -816,6 +887,17 @@ server:
    port: 9797
 ```
 ![Демонстрация регистрации Identity в Eureka.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/Identity/%D0%94%D0%B5%D0%BC%D0%BE%D0%BD%D1%81%D1%82%D1%80%D0%B0%D1%86%D0%B8%D1%8F%20%D1%80%D0%B5%D0%B3%D0%B8%D1%81%D1%82%D1%80%D0%B0%D1%86%D0%B8%D0%B8%20Identity%20%D0%B2%20Eureka.png)
+
+<details><summary>Рассмотрим демонстрацию работы Микросервиса регистрации и аутентификации пользователя. Для этого необходимо запустить контейнер postgres БД security,
+сервис Eureka, микросервис шлюз Spring Cloud Gateway, микросервис регистрации и аутентификации identity-service:</summary>
+
+1. Регистрация пользователя с именем Oleg и паролем 123456:
+![1. Registration new user.png](%D1%F5%E5%EC%FB%20%E4%EB%FF%20README%2FIdentity%2FDemonstration%20of%20work%2F1.%20Registration%20new%20user.png)
+2. Получение токена для пользователя Oleg
+![2. Generation of token for user.png](%D1%F5%E5%EC%FB%20%E4%EB%FF%20README%2FIdentity%2FDemonstration%20of%20work%2F2.%20Generation%20of%20token%20for%20user.png)
+3. Валидация полученного токена:
+![3. Валидация полученного токена.png](%D1%F5%E5%EC%FB%20%E4%EB%FF%20README%2FIdentity%2FDemonstration%20of%20work%2F3.%20%C2%E0%EB%E8%E4%E0%F6%E8%FF%20%EF%EE%EB%F3%F7%E5%ED%ED%EE%E3%EE%20%F2%EE%EA%E5%ED%E0.png)
+</details>
 
 
 
