@@ -919,7 +919,7 @@ postgresql, flyway-core.
 Т.е. модуль процессинга будет являться поставщиком сообщений, а модуль истории будет являться потребителем сообщений
 из Kafka, будет их забирать и отправлять в БД.
 
-![Схема работы.png](%D1%F5%E5%EC%FB%20%E4%EB%FF%20README%2FHistory%20service%2F%D1%F5%E5%EC%E0%20%F0%E0%E1%EE%F2%FB.png)
+![Схема работы.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/History%20service/%D0%A1%D1%85%D0%B5%D0%BC%D0%B0%20%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B.png)
 
 
 
