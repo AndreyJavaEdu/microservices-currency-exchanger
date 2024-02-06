@@ -888,15 +888,20 @@ server:
 ```
 ![Демонстрация регистрации Identity в Eureka.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/Identity/%D0%94%D0%B5%D0%BC%D0%BE%D0%BD%D1%81%D1%82%D1%80%D0%B0%D1%86%D0%B8%D1%8F%20%D1%80%D0%B5%D0%B3%D0%B8%D1%81%D1%82%D1%80%D0%B0%D1%86%D0%B8%D0%B8%20Identity%20%D0%B2%20Eureka.png)
 
-<details><summary>Рассмотрим демонстрацию работы Микросервиса регистрации и аутентификации пользователя. Для этого необходимо запустить контейнер postgres БД security,
+<details><summary>Рассмотрим демонстрацию работы микросервиса регистрации и аутентификации пользователя. Для этого необходимо запустить контейнер postgres БД security,
 сервис Eureka, микросервис шлюз Spring Cloud Gateway, микросервис регистрации и аутентификации identity-service:</summary>
 
 1. Регистрация пользователя с именем Oleg и паролем 123456:
-![1. Registration new user.png](%D1%F5%E5%EC%FB%20%E4%EB%FF%20README%2FIdentity%2FDemonstration%20of%20work%2F1.%20Registration%20new%20user.png)
-2. Получение токена для пользователя Oleg
-![2. Generation of token for user.png](%D1%F5%E5%EC%FB%20%E4%EB%FF%20README%2FIdentity%2FDemonstration%20of%20work%2F2.%20Generation%20of%20token%20for%20user.png)
+
+![1. Registration new user.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/Identity/Demonstration%20of%20work/1.%20Registration%20new%20user.png)
+
+2. Получение токена для пользователя Oleg:
+
+![2. Generation of token for user.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/Identity/Demonstration%20of%20work/2.%20Generation%20of%20token%20for%20user.png)
+
 3. Валидация полученного токена:
-![3. Валидация полученного токена.png](%D1%F5%E5%EC%FB%20%E4%EB%FF%20README%2FIdentity%2FDemonstration%20of%20work%2F3.%20%C2%E0%EB%E8%E4%E0%F6%E8%FF%20%EF%EE%EB%F3%F7%E5%ED%ED%EE%E3%EE%20%F2%EE%EA%E5%ED%E0.png)
+
+![3. Валидация полученного токена.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/Identity/Demonstration%20of%20work/3.%20%D0%92%D0%B0%D0%BB%D0%B8%D0%B4%D0%B0%D1%86%D0%B8%D1%8F%20%D0%BF%D0%BE%D0%BB%D1%83%D1%87%D0%B5%D0%BD%D0%BD%D0%BE%D0%B3%D0%BE%20%D1%82%D0%BE%D0%BA%D0%B5%D0%BD%D0%B0.png)
 </details>
 
 
