@@ -1326,7 +1326,7 @@ setUpdates отправляет сообщения пользователю. Т.
 на сервере Telegram. Каждое сообщение от клиента имеет свой оффсет. Телеграм-бот запрашивает команды getUpdates
 именно по оффсету, но если оффсет не задан, либо нулевой, то Телеграмм-бот получает все новые сообщения.
 
-![Схема работы Телеграм бота.png](%D1%F5%E5%EC%FB%20%E4%EB%FF%20README%2FNotification%2F%D1%F5%E5%EC%E0%20%F0%E0%E1%EE%F2%FB%20%D2%E5%EB%E5%E3%F0%E0%EC%20%E1%EE%F2%E0.png)
+![Схема работы Телеграм бота.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/Notification/%D0%A1%D1%85%D0%B5%D0%BC%D0%B0%20%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B%20%D0%A2%D0%B5%D0%BB%D0%B5%D0%B3%D1%80%D0%B0%D0%BC%20%D0%B1%D0%BE%D1%82%D0%B0.png)
 
 
 
