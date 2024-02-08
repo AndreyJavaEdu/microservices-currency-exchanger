@@ -1292,7 +1292,7 @@ record - это запись или сообщение в Кфаке. Из за�
 
 Демонстрация получения списка событий по счету пользователя через Postman:
 
-![Получение списка операций со счетом пользователя.png](%D1%F5%E5%EC%FB%20%E4%EB%FF%20README%2FHistory%20service%2F%CF%EE%EB%F3%F7%E5%ED%E8%FF%20%F1%EF%E8%F1%EA%E0%20%E2%F1%E5%F5%20%F1%EE%E1%FB%F2%E8%E9%20%E4%EB%FF%20%F1%F7%E5%F2%E0%2F%CF%EE%EB%F3%F7%E5%ED%E8%E5%20%F1%EF%E8%F1%EA%E0%20%EE%EF%E5%F0%E0%F6%E8%E9%20%F1%EE%20%F1%F7%E5%F2%EE%EC%20%EF%EE%EB%FC%E7%EE%E2%E0%F2%E5%EB%FF.png)
+![Получение списка операций со счетом пользователя.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/History%20service/%D0%9F%D0%BE%D0%BB%D1%83%D1%87%D0%B5%D0%BD%D0%B8%D1%8F%20%D1%81%D0%BF%D0%B8%D1%81%D0%BA%D0%B0%20%D0%B2%D1%81%D0%B5%D1%85%20%D1%81%D0%BE%D0%B1%D1%8B%D1%82%D0%B8%D0%B9%20%D0%B4%D0%BB%D1%8F%20%D1%81%D1%87%D0%B5%D1%82%D0%B0/%D0%9F%D0%BE%D0%BB%D1%83%D1%87%D0%B5%D0%BD%D0%B8%D0%B5%20%D1%81%D0%BF%D0%B8%D1%81%D0%BA%D0%B0%20%D0%BE%D0%BF%D0%B5%D1%80%D0%B0%D1%86%D0%B8%D0%B9%20%D1%81%D0%BE%20%D1%81%D1%87%D0%B5%D1%82%D0%BE%D0%BC%20%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D0%B5%D0%BB%D1%8F.png)
 
 
 
