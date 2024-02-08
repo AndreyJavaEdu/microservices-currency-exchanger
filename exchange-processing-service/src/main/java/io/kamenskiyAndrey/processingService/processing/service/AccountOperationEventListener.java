@@ -3,6 +3,7 @@ package io.kamenskiyAndrey.processingService.processing.service;
 import io.kamenskiyAndrey.processingService.processing.model.AccountEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 //Слушатель транзакции
@@ -13,9 +14,8 @@ public class AccountOperationEventListener {
     private final AccountEventSendingService sendingService;
 
     // Метод по обработке события по завершению транзакции (после коммита транзакции данный метод будет вызван)
-    @TransactionalEventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleEvent(AccountEvent event) {
         sendingService.sendEvent(event);
     }
-
 }

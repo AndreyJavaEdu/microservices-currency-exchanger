@@ -916,10 +916,199 @@ postgresql, flyway-core.
 У нас есть сервис процессинга, который совершает какие то операции со счетом. События всех этих операций
 отправляется в виде сообщений в Kafka в виде JSON. И сервисы потребители ([history-service](history-service) и [notification-bot](notification-bot))
 будут из Kafka-очереди вычитывать сообщения и сохранять в БД и Web-клиент сможет их получать по Рест-интерфейсу.
-Т.е. модуль процессинга будет являться поставщиком сообщений, а модуль истории будет являться потребителем сообщений
+Т.е. модуль процессинга является поставщиком сообщений, а модуль истории является потребителем сообщений
 из Kafka, будет их забирать и отправлять в БД.
 
 ![Схема работы.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/History%20service/%D0%A1%D1%85%D0%B5%D0%BC%D0%B0%20%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B.png)
+
+Чтобы проинсталировать Кафку на машину используем докер образы - [docker-compose.yml](docker-compose.yml):
+```yaml
+version: '3.1'
+
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: wurstmeister/kafka
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: localhost
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CREATE_TOPICS: "account-events:1:1"
+```
+При запуске docker-compose файла создастся контейнеры с zookeeper и Кафкой с топиком account-events, имеющим
+1 partition и 1 replication factor. В качестве пет проекта этого будет достаточно для демонстрации, как работать с брокером Кафка.
+
+В микросервисе процессинга реализовали отправку сообщений в Кафку. Для этого в микросервисе
+процессинга в [pom.xml](exchange-processing-service%2Fpom.xml)pom.xml файле добавлена зависимость, чтобы Spring понял как работать с Кафкой в качестве Producer:
+```xml
+<dependency>
+   <groupId>org.springframework.kafka</groupId>
+   <artifactId>spring-kafka</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.kafka</groupId>
+    <artifactId>spring-kafka-test</artifactId>
+    <scope>test</scope>
+</dependency>
+```
+Также в модуле процессинга сделали основные настройки Продюссера в [application.yml](exchange-processing-service%2Fsrc%2Fmain%2Fresources%2Fapplication.yml):
+```yaml
+spring:
+  application:
+    name: exchange-processing-service
+#Настроили порт кафки
+  kafka:
+    producer:
+      bootstrap-servers: ${cloud.kafka-host}:9092
+      key-serializer: org.apache.kafka.common.serialization.LongSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      request:
+        timeout:
+          ms: 1000
+```
+Мы указали host по которому микросервис процессинга будет обращаться в Кафку (`bootstrap-servers: ${cloud.kafka-host}:9092`).
+Также мы добавили настройку сериализатора 
+(т.е. объект который мы будем помещать в топик необходимо будет сериализовать и потом десериализовать).
+В сервисе процессинга будет происходить только сериализация объекта (причем как ключа, так и значения)
+и отправка в топик.
+Основные классы для сериализации в библиотеки Кафки уже есть, поэтому добавили соответствующие настройки -
+key-serializer и value-serializer. В нашем случае сериализатор для ключа - в результате сериализации
+будет число. И сериализатор для значения - обычная строка.
+
+Чтобы сгенерировать сообщение для события операции со счетом мы реализовали модель события - [AccountEvent.java](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Fmodel%2FAccountEvent.java).
+
+<details>
+
+  <summary>AccountEvent</summary>
+
+```java
+@Data
+@Builder
+public class AccountEvent {
+    @NonNull
+    private String uuid; //уникальный номер операции
+
+    private long userId, accountId;
+
+    private Long fromAccount; //откуда списаны деньги
+
+    @NonNull
+    private String currencyCode; //код валюты
+
+    @NonNull
+    private Operation operation; // Операции - пополнение счета и перевод (тип операции)
+
+    @NonNull
+    private BigDecimal amount; //Сумма перевода
+
+    @NonNull
+    private Date created; //Дата создания
+}
+```
+
+</details>
+
+Также создали enum класс [Operation.java](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Fmodel%2FOperation.java) в котором обозначили две операции - пополнение счета и перевод:
+```java
+public enum Operation {
+    PUT, EXCHANGE
+}
+```
+
+Далее мы реализовали класс-сервис для отправки сообщения в Кафку - [AccountEventSendingService.java](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Fservice%2FAccountEventSendingService.java).
+В данном классе будет единственный метод - sendEvent():
+```java
+    public void sendEvent(AccountEvent event) {
+        //получили id счета
+        var accountId = event.getAccountId();
+        //формируем сообщение в Кафку, из объекта переводим в строку типа Json
+        String message;
+        try {
+            message = mapper.writeValueAsString(event);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        //Отправим событие в ввиде сериализованного сообщения втопик - это асинхронная операция
+        var future = kafkaTemplate.send(ACCOUNT_EVENTS, accountId, message);
+        //Убеждыемся, что сообщение дошло до топика и туда сохранилось
+        try {
+            future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+```
+В параметры метод принимает объект реализованного класса [AccountEvent.java](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Fmodel%2FAccountEvent.java).
+В самом методе мы сразу получаем ключ - accountId, а также сообщение message в виде строки, которое преобразуется из объекта в строку
+с помощью метода объекта mapper - writeValueAsString().
+Для отправки сообщения будем использовать объект класса KafkaTemplate:
+```java
+ private final KafkaTemplate<Long, String> kafkaTemplate;
+
+    @Autowired
+    public AccountEventSendingService(KafkaTemplate<Long, String> kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+    }
+```
+На объекте KafkaTemplate мы вызываем метод send() в параметрах которого указываем название топика, 
+ключ и само сообщение.
+Чтобы убедиться, что сообщение дошло до топика и туда сохранилось мы используем метод get() на объекте future
+и если данный метод срабатывает без ошибки, то мы можем быть уверены, что сообщение дошло до топика.
+
+Наиболее удобным и правильным способом вызвать метод sendEvent() будет после комита транзакции,
+где мы совершаем операцию на счете. Т.е. необходимо реализовать слушателя транзакции и после его успешного завершения
+мы можем отправить данные в топик.
+
+Для этого реализовали слушателя транзакции - [AccountOperationEventListener.java](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Fservice%2FAccountOperationEventListener.java).
+В данном классе реализован метод по обработке события по завершению транзакции - handleEvent():
+```java
+    @TransactionalEventListener
+    public void handleEvent(AccountEvent event) {
+        sendingService.sendEvent(event);
+    }
+```
+Внутри данный метод вызывает метод отправки сообщения в топик Кафки.
+Данный метод помечен аннотацией @TransactionalEventListener, которая говорит что данный 
+метод сработает после коммита транзакции.
+
+Чтобы отправить событие мы реализовали метод по генерации события в классе-сервисе [AccountCreateService.java](exchange-processing-service%2Fsrc%2Fmain%2Fjava%2Fio%2FkamenskiyAndrey%2FprocessingService%2Fprocessing%2Fservice%2FAccountCreateService.java):
+```java
+    //Метод генерации события
+    private AccountEvent createEvent(String uid, AccountEntity account, Long fromAccount, Operation operation, BigDecimal amount){
+        var currentDate = new Date();
+        return AccountEvent.builder()
+                .uuid(uid)
+                .accountId(account.getId())
+                .currencyCode(account.getCurrencyCode())
+                .userId(account.getUserId())
+                .fromAccount(fromAccount)
+                .operation(operation)
+                .amount(amount)
+                .created(currentDate)
+                .build();
+    }
+```
+За счет билдера мы заполняем необходимые атрибуты объекта AccountEvent.
+Далее в методе addMoneyToAccount() мы генерируем и публикуем событие вызвав метод createEvent() в параметре метода publishEvent()
+на бине ApplicationEventPublisher. Событие публикуется в контекст Spring. После того, как транзакция завершается и фиксируется
+коммитом срабатывает метод handleEvent(), который является слушателем события. Этот метод принимает в параметр это событие и 
+передает его методу sendEvent(), который отправляет событие в виде сообщения в Кафку.
+
+Демонстрация отправки события в топик Кафки микросервисом [exchange-processing-service](exchange-processing-service):
+1. В Web-клиенте (Postman) создадим какую нибудь операцию со счетом:
+
+
+
+
+
+
 
 
 
