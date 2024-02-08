@@ -906,7 +906,6 @@ server:
 
 
 ### 6. микросервис по получению истории операций со счетами конкретного пользователя - [history-service](history-service)
-Данный микросервис написан на Kotlin.
 
 Техлогии и библиотеки: spring-boot-starter 3.2.0, spring-boot-starter-data-jpa,
 spring-cloud-starter-netflix-eureka-client,
@@ -945,6 +944,7 @@ services:
 При запуске docker-compose файла создастся контейнеры с zookeeper и Кафкой с топиком account-events, имеющим
 1 partition и 1 replication factor. В качестве пет проекта этого будет достаточно для демонстрации, как работать с брокером Кафка.
 
+#### Описание Producer-а, которым является микросервис процессинга [exchange-processing-service](exchange-processing-service)
 В микросервисе процессинга реализовали отправку сообщений в Кафку. Для этого в микросервисе
 процессинга в [pom.xml](exchange-processing-service%2Fpom.xml)pom.xml файле добавлена зависимость, чтобы Spring понял как работать с Кафкой в качестве Producer:
 ```xml
@@ -1123,6 +1123,176 @@ docker exec -ti kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-serve
 ```
 ![4. Демонстрация, что событие записалось в топик.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/%D0%9E%D1%82%D0%BF%D1%80%D0%B0%D0%B2%D0%BA%D0%B0%20%D1%81%D0%BE%D0%B1%D1%8B%D1%82%D0%B8%D1%8F%20%D0%B2%20%D1%82%D0%BE%D0%BF%D0%B8%D0%BA%20%D0%9A%D0%B0%D1%84%D0%BA%D0%B8/4.%20%D0%94%D0%B5%D0%BC%D0%BE%D0%BD%D1%81%D1%82%D1%80%D0%B0%D1%86%D0%B8%D1%8F%2C%20%D1%87%D1%82%D0%BE%20%D1%81%D0%BE%D0%B1%D1%8B%D1%82%D0%B8%D0%B5%20%D0%B7%D0%B0%D0%BF%D0%B8%D1%81%D0%B0%D0%BB%D0%BE%D1%81%D1%8C%20%D0%B2%20%D1%82%D0%BE%D0%BF%D0%B8%D0%BA.png)
 </details>
+
+#### Описание Consumer-а, которым является микросервис истории [history-service](history-service)
+Итак мы убедились что публикация в топик Кафки работает, теперь рассмотрим работу микросервиса истории [history-service](history-service),
+который выступает как потребитель этих событий из топика Кафки.
+Сам микросервис реализован на языке Kotlin.
+Создана БД для хранения истории с именем - account-history. В пакете [migration](history-service%2Fsrc%2Fmain%2Fresources%2Fdb%2Fmigration) для миграций БД созданы два скрипта
+для двух таблиц. Первый скрипт - это операции [V2__History_events.sql](history-service%2Fsrc%2Fmain%2Fresources%2Fdb%2Fmigration%2FV2__History_events.sql),
+а второй скрипт - это история счетов для второй таблицы [V2__History_events.sql](history-service%2Fsrc%2Fmain%2Fresources%2Fdb%2Fmigration%2FV2__History_events.sql).
+
+Создание таблицы OPERATION:
+```postgresql
+create table OPERATION
+(
+    ID smallint not null primary key,
+    OPERATION_CODE varchar(8) not null
+);
+
+INSERT INTO OPERATION(ID, OPERATION_CODE) VALUES (1, 'PUT'), (2, 'EXCHANGE');
+```
+Создание таблицы ACCOUNT_EVENT:
+```postgresql
+create table ACCOUNT_EVENT
+(
+    uuid varchar(120) not null,
+    user_id bigint not null,
+    account_id bigint not null,
+    from_account bigint,
+    currency_code varchar(3) not null,
+    operation_code smallint not null,
+    amount bigint not null,
+    date_creation_event timestamp not null,
+    primary key (uuid, account_id)
+);
+```
+Проект сконфигурирован в [application.yml](history-service%2Fsrc%2Fmain%2Fresources%2Fapplication.yml) -
+добавлена конфигурация для БД:
+```yaml
+spring:
+  application:
+    name: history-service
+
+  datasource:
+    url: jdbc:postgresql://${cloud.db-host}:5433/account-history
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+```
+Конфигурация для миграции БД с помощью Flyway:
+```yaml
+  flyway:
+    enabled: true
+    locations: classpath:db
+    url: jdbc:postgresql://${cloud.db-host}:5433/account-history
+    user: postgres
+    password: password
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+```
+Для настройки Consumer-а Кафки мы указали настройку десериалайзера, а также группу потребителей,
+т.к. Офсетты комитятся не в рамках конкретного потребителя, а врамках группы потребителей.
+```yaml
+  kafka:
+    consumer:
+      bootstrap-servers: ${cloud.kafka-host}:9092
+      key-deserializer: org.apache.kafka.common.serialization.LongDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      group-id: ${spring.application.name}-group
+#      для считывания начального off set для группы потребителей
+      auto-offset-reset: earliest
+```
+Также настроили оффсет настройкой 'auto-offset-reset: earliest' , чтобы при запуске данного микросервиса 
+мы считывали не последний, а начальный оффсет для данной группы.
+
+Реализована модель события в классе [AccountEvent.kt](history-service%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2Fhistory%2Fmodel%2FAccountEvent.kt)
+в пакете [model](history-service%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2Fhistory%2Fmodel). 
+<details><summary>Данная модель будет использоваться как Entity для сохранения в БД:</summary>
+
+```Kotlin
+@Entity
+@IdClass(EventKey::class)
+@Table(name = "ACCOUNT_EVENT")
+data class AccountEvent(
+        @Id
+        @Column(name = "uuid", nullable = false)
+        val uuid: String,
+
+        @Id
+        @Column(name = "account_id", nullable = false)
+        val accountId: Long,
+
+        @Column(name = "user_id", nullable = false)
+        val userId: Long,
+
+        @Column(name = "from_account", nullable = true)
+        val fromAccount: Long?,
+
+        @Column(name = "currency_code", nullable = false)
+        val currencyCode: String,
+
+        @Column(name = "operation_code", nullable = false)
+        val operation: Operation,
+
+        @Column(name = "amount", nullable = false)
+        val amount: BigDecimal,
+
+        @Column(name = "date_creation_event", nullable = false)
+        val created: Date,
+)
+
+//Класс составного ключа
+@Embeddable // пометили данный класс как встраиваемый в класс AccountEvent
+class EventKey(
+        val uuid: String,
+        val accountId: Long
+): Serializable
+```
+</details>
+Идентификатор в данном случае реализован как составной и состоит из двух полей - uuid и accountId. Для этого реализован встраиваемый класс
+и помеченный аннотацией @Embeddable, содержащий поля составного Primary Key.
+
+Реализован репозиторий [AccountEventRepository.kt](history-service%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2Fhistory%2Frepository%2FAccountEventRepository.kt) в пакете [repository](history-service%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2Fhistory%2Frepository)
+для того чтобы мы могли сохранять наши события с операциями со счетом в БД. 
+
+Далее реализован сервис-класс [AccountEventKafkaListener.kt](history-service%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2Fhistory%2FAccountEventKafkaListener.kt), который выполняет роль Consumer-а из топика Кафки.
+Данный класс инжектит бин репозитория [AccountEventRepository.kt](history-service%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2Fhistory%2Frepository%2FAccountEventRepository.kt).
+```Kotlin
+@Service
+class AccountEventKafkaListener(private val repository: AccountEventRepository) {
+   private val mapper = jacksonObjectMapper() //тут получаем мэппер для десериализации данных из топика Кафки
+
+
+   //Метод обработки события полученного из Kafka
+   @KafkaListener(topics = ["account-events"]) //указали что данным методом мы читаем из топика кафки
+   fun consumerEvent(record: ConsumerRecord<Long, String>) {
+      //получаем ключ и значение записи
+      val key = record.key()
+      val value = record.value()
+      //десериализовываем  объект entity - AccountEvent
+      val event: AccountEvent = try {
+         mapper.readValue(value)
+      }catch (e: Exception){
+         throw e
+      }
+      //сохраняем в БД
+      repository.save(event)
+   }
+}
+```
+В данном классе используется объект jacksonObjectMapper, который применяется для десериализации сообщения
+из Кафки в объект Kotlin по типу AccountEvent для дальнейшего его сопоставления с таблицей БД и сохранения в БД.
+В классе также реализована функция consumerEvent, которая помечена аннотацией
+@KafkaListener(topics = ["account-events"]), в параметре аннотации указан топик, откуда будет происходить чтение сообщения
+Кафки. Сам этот метод в параметре принимает объект record по типу ConsumerRecord<Long, String>.
+record - это запись или сообщение в Кфаке. Из записи record мы получаем ключ и значение. Далее значение
+мы десериализовываем с помощью объекта mapper-а, который создан в классе. После десериализации мы получаем объект event
+и далее с помощью стандартного мтеода save() JPA, вызванного на бине репозитория, сохраняем этот объект в БД.
+
+Далее реализован Рест-интерфейс, а именно класс [AccountEventService.kt](history-service%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2Fhistory%2Fservice%2FAccountEventService.kt),
+а также Рест-контроллер [AccountHistoryController.kt](history-service%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2Fhistory%2Fcontroller%2FAccountHistoryController.kt) для
+В контроллере реализован метод по получению списка всех событий по операция со счетом:
+- GET - findAllOperationsInAccountHistory() - в данном методе в параметр поступает идентификатор пользователя
+из Хэдера запроса через Gateway. Пользователь вводит лишь идентификатор своего счета. Далее
+по идентификатору пользователя и идентификатору счета (составной Primary Key) происходит выборка из таблицы
+всех сохраненный событий по операциям со счетом пользователя.
+
+Демонстрация получения списка событий по счету пользователя через Postman:
+
+![Получение списка операций со счетом пользователя.png](%D1%F5%E5%EC%FB%20%E4%EB%FF%20README%2FHistory%20service%2F%CF%EE%EB%F3%F7%E5%ED%E8%FF%20%F1%EF%E8%F1%EA%E0%20%E2%F1%E5%F5%20%F1%EE%E1%FB%F2%E8%E9%20%E4%EB%FF%20%F1%F7%E5%F2%E0%2F%CF%EE%EB%F3%F7%E5%ED%E8%E5%20%F1%EF%E8%F1%EA%E0%20%EE%EF%E5%F0%E0%F6%E8%E9%20%F1%EE%20%F1%F7%E5%F2%EE%EC%20%EF%EE%EB%FC%E7%EE%E2%E0%F2%E5%EB%FF.png)
 
 
 
