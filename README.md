@@ -1298,6 +1298,8 @@ record - это запись или сообщение в Кфаке. Из за�
 
 ### 7. Микросервис нотификации - телеграмм бот, реализующий оповещение пользователя - [notification-bot](notification-bot)
 
+Данный микросервис реализован на языке Kotlin и Spring boot.
+
 Техлогии и библиотеки: spring-boot-starter 3.2.2, telegrambots-spring-boot-starter:6.8.0,
 spring-boot-starter-web, jackson-module-kotlin, spring-kafka, 
 зависимости для работы с jjwt (jjwt-api, jjwt-impl, jjwt-jackson).
@@ -1328,13 +1330,165 @@ setUpdates отправляет сообщения пользователю. Т.
 
 ![Схема работы Телеграм бота.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/Notification/%D0%A1%D1%85%D0%B5%D0%BC%D0%B0%20%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B%20%D0%A2%D0%B5%D0%BB%D0%B5%D0%B3%D1%80%D0%B0%D0%BC%20%D0%B1%D0%BE%D1%82%D0%B0.png)
 
+Сознан класс-агента [TelegramSubscriptionServiceAgent.kt](notification-bot%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fnotification%2Fservice%2FTelegramSubscriptionServiceAgent.kt) для работы с API Telegram в пакете [service](notification-bot%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fnotification%2Fservice).
+Данный класс является наследником от класса TelegramLongPollingBot из стартера telegrambots-spring-boot-starter.
+Имплементировали его два метода - getBotUsername() и onUpdateReceived(), а также переопределили конструктор, 
+в который передается один параметр - этот access token (как раз тот токен, который мы получили от FatherBot).
+Именно с помощью метода onUpdateReceived() мы будем получать сообщения из Telegram.
 
 
+Перед реализацией метода onUpdateReceived() необходимо сконфигурировать телеграм бот, определить его имя и его токен.
+После добавления аннотации @Component над классом [TelegramSubscriptionServiceAgent.kt](notification-bot%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fnotification%2Fservice%2FTelegramSubscriptionServiceAgent.kt)
+то видим, что Spring Boot не знает как заполнить параметр в конструкторе - токен. И этот токен мы будем 
+получать из файла посредством конфигурации в [application.yml](notification-bot%2Fsrc%2Fmain%2Fresources%2Fapplication.yml)
+и добавления специального конфигурационного класса для телеграмм бота - [TelegramBotConfig.kt](notification-bot%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fnotification%2Fconfig%2FTelegramBotConfig.kt).
 
+Реализовали класс [BotSettings.kt](notification-bot%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fnotification%2Fconfig%2FBotSettings.kt) для настроек бота
+в пакете [config](notification-bot%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fnotification%2Fconfig).
+Этот класс является data class. В этом классе два параметра - имя бота (nameOfBot) и его токен (token):
+```Kotlin
+data class BotSettings(val nameOfBot: String, val token: String)
+```
+Добавили в конфигурационный файл [application.yml](notification-bot%2Fsrc%2Fmain%2Fresources%2Fapplication.yml)
+настройку для чтения токена из файла, а также имя самого бота, который мы ранее зарегистрировали
+с помощью BotFather:
+```yaml
+telegram:
+    botName: java-bot-notification
+    token: ${TELEGRAM_BOT_TOKEN}
+```
+Путь к файлу с токеном мы прочитаем из переменной окружения.
 
+Реализовали класс конфигурации [TelegramBotConfig.kt](notification-bot%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fnotification%2Fconfig%2FTelegramBotConfig.kt), в котором реализовали чтение токена из файла в виде строки.
+Данный класс помечен аннотацией @Configuration. В данном классе реализована функция чтения файла конфигурации и 
+получения имени и токена бота:
+```Kotlin
+@Configuration
+class TelegramBotConfig() {
+    @Autowired
+    private lateinit var appContext: ApplicationContext //инжектим данный бин, чтобы мы могли прочитать файлы из внешнего ресурса
 
+    //также подключим наши настройки которые мы указали в application.yml с помощью аннотации Value мы их достанем из файла application
+    @Value("\${telegram.botName}")
+    private val botName: String = ""
 
+    @Value("\${telegram.token}")
+    private val token: String = ""
 
+    /*Функция чтения файла конфигурации и получение имени и токена.
+    Путь к файлу с токеном прописан в переменной окружения и используется при запуске сервиса.
+    Сам файл с токеном телеграм бота находится в папке conf в проекте.
+     */
+    @Bean
+    fun botSettings(): BotSettings {
+        //реализуем чтение контента из файла с токеном
+        val resource = appContext.getResource("file:$token")
+        val content = if (resource.exists()) resource.file.readText()
+        else throw RuntimeException("File $token not found !!!")
+        return BotSettings(botName, content) //заполняем бин именем бота и его токеном
+    }
+}
+```
+В данном классе мы достали настройки из application.yml, с помощью аннотации @Value.
+Здесь реализован метод botSettings(), с помощью которого происходит чтение контента из файла с токеном.
+Чтение это происходит с использованием метода getResource() вызванного на Спринговом бине ApplicationContext, который
+мы заинжектили. Если файл с токеном не найден то будет выбрашено исключение с сообщением, что файл мы не нашли.
+После чтения контента из файла в методе происходит заполнение бина BotSettings такими настройками, как
+имя бота botName и токен - content, который прочитан из файла с помощью метода объекта бина ApplicationContext.
+
+Итак мы заинжектили уже заполненный бин BotSettings в классе телеграмм агента - [TelegramSubscriptionServiceAgent.kt](notification-bot%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fnotification%2Fservice%2FTelegramSubscriptionServiceAgent.kt).
+
+Сам механиз подписки реализован в виде сервис-класса [SubscriptionService.kt](notification-bot%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fnotification%2Fservice%2FSubscriptionService.kt).
+По сути это просто класс в котором в ХэшМэпе хранятся данные о подписке. В классе объявлено поле subscriptions
+по типу ConcurrentHashMap в Дженериках, которого ключ - это идентификатор пользователя и значение - это идентификатор чата (chatId).
+В данном классе реализован метод subscribeUser(userId: Long, chatId: Long), который принимает в параметр userId и chatId.
+Отправить сообщение боту можно только в контексте какого то конкретного идентификатора чата (chatId).
+```Kotlin
+fun subscribeUser(userId: Long, chatId: Long) = subscriptions.put(userId, chatId)
+```
+Данный метод добавляет пару ключ и значение в объявленный subscriptions, как ConcurrentHashMap, тем самым происходит подписка пользователя.
+
+Также в данном классе реализована функция отписки пользователя:
+```Kotlin
+fun unSubscribeUser(chatId: Long) = subscriptions.entries.removeIf { (_, value) -> value==chatId }
+```
+Отписаться пользователь может лишь по chatId, и необязательно ему знать идентификатор пользователя, главное знать идентификатор чата бота.
+Т.е. происходит поиск соответствующего объекта (entry) внутри мапы subscriptions и и далее этот объект состоящий из ключа и значения удаляется,
+тем самым производится отписка пользователя от чата телеграм бота.
+
+А также в данном сервис-классе реализован метод получения подписки для конкретного пользователя:
+```Kotlin
+ //Метод получения подписки для конкретного пользователя. (мы будем отдавать chat id для конкретного пользователя)
+    fun getSubscription(userId: Long): Long? = subscriptions[userId]
+```
+Метод возвращает chatId по UserId из мапы, но chatId может быть и не найден, поэтому тип может быть nullable.
+
+Далее чтобы класс подписки пользователя работал, мы реализовали также коммандеры этих подписок.
+Мы реализовали это через процессор комманд.
+
+Также мы реализовали класс-сервис [ServiceToGetUserId.kt](notification-bot%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fnotification%2Fservice%2FServiceToGetUserId.kt)
+с методом по получению токена getToken(), а также кастомный утилитарный класс помеченный как компонент [UtilJwtGettingPayload.kt](notification-bot%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fnotification%2Futil%2FUtilJwtGettingPayload.kt)
+с методом extractUserId() для извлечения из токена идентификатора пользователя userId. Для 
+получения токена используется механизм RestTemplate для запроса в микросервис аутентификации и регистрации - identity-service.
+
+Компндеры подписки и отписки пользователя реализованы в классах в пакете [command](notification-bot%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fnotification%2Fservice%2Fcommand).
+Классы командеры имеют похожую структуру, поэтому реализован интерфейс [BotCommandProcessor.kt](notification-bot%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fnotification%2Fservice%2Fcommand%2FBotCommandProcessor.kt),
+в котором определен один метод processMessage():
+```Kotlin
+interface BotCommandProcessor {
+    fun processMessage(message: String, chatId: Long): String
+}
+```
+На вход данного метода поступает сообщение типа String и chatId типа Long. Метод будет
+возвращать какую то строку, чтобы оповестить пользователя об успешности или неуспешности операции.
+
+Реализация метода данного интерфейса выполнена в созданных двух классах [SubscribeCommand.kt](notification-bot%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fnotification%2Fservice%2Fcommand%2FSubscribeCommand.kt) и [UnsubscribeCommand.kt](notification-bot%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fnotification%2Fservice%2Fcommand%2FUnsubscribeCommand.kt) - 
+по созданию подписки и по отмене подписки пользователь.
+
+<details><summary>Разберем работу метода processMessage() в классе SubscribeCommand: </summary>
+
+```Kotlin
+ override fun processMessage(message: String, chatId: Long): String {
+        val (user, password) = message.split(":")
+            .let { array -> array[0] to array[1] } // из введеного сообщения мы получаем логин и пароль пользователя
+
+        val credentials = GetTokenCredentialsDTO(name = user, password = password)
+        logger.info("Получение объекта ДТО - {}", credentials)
+
+        val token = authService.getToken(credentials)
+        logger.info("Получыенный токен - {}", token)
+        if (token != null) {
+            val userId = utilJwt.extractUserId(token)
+            logger.info("Полученный userId - {}", userId)
+            subscriptionService.subscribeUser(userId.toLong(), chatId)
+            return "Подписка оформлена"
+        } else {
+            throw Exception("Токен не обнаружен, возможно не аутентифицирован пользователь")
+        }
+    }
+```
+Для работы метода заинжектили бины [SubscriptionService.kt](notification-bot%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fnotification%2Fservice%2FSubscriptionService.kt),
+[ServiceToGetToken.kt](notification-bot%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fnotification%2Fservice%2FServiceToGetToken.kt),
+а также [UtilJwtGettingPayload.kt](notification-bot%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fnotification%2Futil%2FUtilJwtGettingPayload.kt).
+Из введеного сообщения в телеграм бот пользователем, мы должны получить два параметра -
+это логин пользователя и его пароль. Далее созданный объект класса DTO [GetTokenCredentialsDTO.kt](notification-bot%2Fsrc%2Fmain%2Fkotlin%2Fio%2FkamenskiyAndrey%2FcurrencyExchanger%2Fnotification%2Fmodel%2FGetTokenCredentialsDTO.kt)
+заполняется логином и паролем. Далее на бине по типу ServiceToGetToken вызывается его метод
+getToken() и в параметр метода поступает ранее заполненный объект DTO с именем credentials.
+Т.о. мы получаем сам Токен из сервиса аутентификации. После этого проверяем если полученный
+токен не null, то извлекаем из его payload userId и далее на бине SubscriptionService
+мы вызываем метод для выполнения подписки пользователя, который принимает в параметр userId
+и chatId
+</details>
+
+<details><summary>Теперь разберем работу метода processMessage() в классе UnsubscribeCommand: </summary>
+
+```Kotlin
+    override fun processMessage(message: String, chatId: Long): String {
+   subscriptionService.unSubscribeUser(chatId)
+   return "Подписка отменена"
+}
+```
+</details>
 
 
 
