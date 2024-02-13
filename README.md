@@ -1652,29 +1652,29 @@ sendNotification() бина TelegramSubscriptionServiceAgent в наш теле�
 
 1. Задали параметр окружения, в котором указали адрес на файл с токеном:
 
-![2. назначение переменной окружения.png](%D1%F5%E5%EC%FB%20%E4%EB%FF%20README%2FNotification%2F%E4%E5%EC%EE%ED%F1%F2%F0%E0%F6%E8%FF%2F2.%20%ED%E0%E7%ED%E0%F7%E5%ED%E8%E5%20%EF%E5%F0%E5%EC%E5%ED%ED%EE%E9%20%EE%EA%F0%F3%E6%E5%ED%E8%FF.png)
+![2. назначение переменной окружения.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/Notification/%D0%B4%D0%B5%D0%BC%D0%BE%D0%BD%D1%81%D1%82%D1%80%D0%B0%D1%86%D0%B8%D1%8F/2.%20%D0%BD%D0%B0%D0%B7%D0%BD%D0%B0%D1%87%D0%B5%D0%BD%D0%B8%D0%B5%20%D0%BF%D0%B5%D1%80%D0%B5%D0%BC%D0%B5%D0%BD%D0%BD%D0%BE%D0%B9%20%D0%BE%D0%BA%D1%80%D1%83%D0%B6%D0%B5%D0%BD%D0%B8%D1%8F.png)
 
 2. Запускаем все необходимые микросервисы
 
-![1. Запустили микросервисы в Idea.png](%D1%F5%E5%EC%FB%20%E4%EB%FF%20README%2FNotification%2F%E4%E5%EC%EE%ED%F1%F2%F0%E0%F6%E8%FF%2F1.%20%C7%E0%EF%F3%F1%F2%E8%EB%E8%20%EC%E8%EA%F0%EE%F1%E5%F0%E2%E8%F1%FB%20%E2%20Idea.png)
+![1. Запустили микросервисы в Idea.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/Notification/%D0%B4%D0%B5%D0%BC%D0%BE%D0%BD%D1%81%D1%82%D1%80%D0%B0%D1%86%D0%B8%D1%8F/1.%20%D0%97%D0%B0%D0%BF%D1%83%D1%81%D1%82%D0%B8%D0%BB%D0%B8%20%D0%BC%D0%B8%D0%BA%D1%80%D0%BE%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D1%8B%20%D0%B2%20Idea.png)
 
 3. Отправляем команду /subscribe Misha:1122 данному телеграмм боту, в отпвет получаем сообщение, что подписка оформлена:
 
-![3. Пописка пользователя Misha.png](%D1%F5%E5%EC%FB%20%E4%EB%FF%20README%2FNotification%2F%E4%E5%EC%EE%ED%F1%F2%F0%E0%F6%E8%FF%2F3.%20%CF%EE%EF%E8%F1%EA%E0%20%EF%EE%EB%FC%E7%EE%E2%E0%F2%E5%EB%FF%20Misha.png)
+![3. Пописка пользователя Misha.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/Notification/%D0%B4%D0%B5%D0%BC%D0%BE%D0%BD%D1%81%D1%82%D1%80%D0%B0%D1%86%D0%B8%D1%8F/3.%20%D0%9F%D0%BE%D0%BF%D0%B8%D1%81%D0%BA%D0%B0%20%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D0%B5%D0%BB%D1%8F%20Misha.png)
 
 4. Теперь пробуем через Web-клиент (в нашем случае Postman) пополнить счет c id=1 на 1000 и переведем 1000 с 1 счета на 2 счет:
 
-![4(1). Пополнение счета клиента.png](%D1%F5%E5%EC%FB%20%E4%EB%FF%20README%2FNotification%2F%E4%E5%EC%EE%ED%F1%F2%F0%E0%F6%E8%FF%2F4%281%29.%20%CF%EE%EF%EE%EB%ED%E5%ED%E8%E5%20%F1%F7%E5%F2%E0%20%EA%EB%E8%E5%ED%F2%E0.png)
+![4(1). Пополнение счета клиента.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/Notification/%D0%B4%D0%B5%D0%BC%D0%BE%D0%BD%D1%81%D1%82%D1%80%D0%B0%D1%86%D0%B8%D1%8F/4(1).%20%D0%9F%D0%BE%D0%BF%D0%BE%D0%BB%D0%BD%D0%B5%D0%BD%D0%B8%D0%B5%20%D1%81%D1%87%D0%B5%D1%82%D0%B0%20%D0%BA%D0%BB%D0%B8%D0%B5%D0%BD%D1%82%D0%B0.png)
 
-![4(2) Перевод с 1 счета на 2 счет 1000.png](%D1%F5%E5%EC%FB%20%E4%EB%FF%20README%2FNotification%2F%E4%E5%EC%EE%ED%F1%F2%F0%E0%F6%E8%FF%2F4%282%29%20%CF%E5%F0%E5%E2%EE%E4%20%F1%201%20%F1%F7%E5%F2%E0%20%ED%E0%202%20%F1%F7%E5%F2%201000.png)
+![4(2) Перевод с 1 счета на 2 счет 1000.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/Notification/%D0%B4%D0%B5%D0%BC%D0%BE%D0%BD%D1%81%D1%82%D1%80%D0%B0%D1%86%D0%B8%D1%8F/4(2)%20%D0%9F%D0%B5%D1%80%D0%B5%D0%B2%D0%BE%D0%B4%20%D1%81%201%20%D1%81%D1%87%D0%B5%D1%82%D0%B0%20%D0%BD%D0%B0%202%20%D1%81%D1%87%D0%B5%D1%82%201000.png)
 
-![4(3) Демонстрация оповещения по операциям.png](%D1%F5%E5%EC%FB%20%E4%EB%FF%20README%2FNotification%2F%E4%E5%EC%EE%ED%F1%F2%F0%E0%F6%E8%FF%2F4%283%29%20%C4%E5%EC%EE%ED%F1%F2%F0%E0%F6%E8%FF%20%EE%EF%EE%E2%E5%F9%E5%ED%E8%FF%20%EF%EE%20%EE%EF%E5%F0%E0%F6%E8%FF%EC.png)
+![4(3) Демонстрация оповещения по операциям.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/Notification/%D0%B4%D0%B5%D0%BC%D0%BE%D0%BD%D1%81%D1%82%D1%80%D0%B0%D1%86%D0%B8%D1%8F/4(3)%20%D0%94%D0%B5%D0%BC%D0%BE%D0%BD%D1%81%D1%82%D1%80%D0%B0%D1%86%D0%B8%D1%8F%20%D0%BE%D0%BF%D0%BE%D0%B2%D0%B5%D1%89%D0%B5%D0%BD%D0%B8%D1%8F%20%D0%BF%D0%BE%20%D0%BE%D0%BF%D0%B5%D1%80%D0%B0%D1%86%D0%B8%D1%8F%D0%BC.png)
 
-Итак телеграм бот оповещает подписанного пользователя об операциях на его счетах.
+Итак телеграмм бот оповещает подписанного пользователя об операциях на его счетах.
 
 5. Теперь попробуем отменить подписку пользователя на оповещение телеграмм ботом, командой /unsubscribe:
 
-![5. Отмена подписки пользователя.png](%D1%F5%E5%EC%FB%20%E4%EB%FF%20README%2FNotification%2F%E4%E5%EC%EE%ED%F1%F2%F0%E0%F6%E8%FF%2F5.%20%CE%F2%EC%E5%ED%E0%20%EF%EE%E4%EF%E8%F1%EA%E8%20%EF%EE%EB%FC%E7%EE%E2%E0%F2%E5%EB%FF.png)
+![5. Отмена подписки пользователя.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/readme-file/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/Notification/%D0%B4%D0%B5%D0%BC%D0%BE%D0%BD%D1%81%D1%82%D1%80%D0%B0%D1%86%D0%B8%D1%8F/5.%20%D0%9E%D1%82%D0%BC%D0%B5%D0%BD%D0%B0%20%D0%BF%D0%BE%D0%B4%D0%BF%D0%B8%D1%81%D0%BA%D0%B8%20%D0%BF%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D0%B5%D0%BB%D1%8F.png)
 </details>
 
 
