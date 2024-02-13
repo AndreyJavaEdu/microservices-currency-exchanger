@@ -31,5 +31,4 @@ class AccountEventKafkaListener(private val repository: AccountEventRepository) 
         //сохраняем в БД
         repository.save(event)
     }
-
 }

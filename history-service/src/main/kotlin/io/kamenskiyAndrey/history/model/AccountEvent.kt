@@ -37,7 +37,7 @@ data class AccountEvent(
 )
 
 //Класс составного ключа
-@Embeddable // пометили данный класс как встаиваемый в класс AccountEvent
+@Embeddable // пометили данный класс как встраиваемый в класс AccountEvent
 class EventKey(
         val uuid: String,
         val accountId: Long

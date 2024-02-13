@@ -11,5 +11,4 @@ public class ExchangeProcessingApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(ExchangeProcessingApplication.class, args);
 	}
-
 }

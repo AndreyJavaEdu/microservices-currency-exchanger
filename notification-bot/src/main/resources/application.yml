@@ -1,3 +1,6 @@
+server:
+    port: 8077
+
 telegram:
     botName: java-bot-notification
     token: ${TELEGRAM_BOT_TOKEN}
@@ -20,13 +23,13 @@ spring:
             #      для считывания начального off set для группы потребителей
             auto-offset-reset: earliest
 
-server:
-    port: 8020
-
 #eureka:
-#    client:
-#        fetch-registry: true
-#        register-with-eureka: true
-#        service-url:
-#            defaultZone: http://${cloud.eureka-host}:8761/eureka/
-
+#  client:
+#    fetch-registry: true
+#    register-with-eureka: true
+#    service-url:
+#      defaultZone: http://${cloud.eureka-host}:8761/eureka/
+#  instance:
+#    hostname: localhost
+#    prefer-ip-address: true
+#    instance-id: ${spring.application.name}:${server.port}

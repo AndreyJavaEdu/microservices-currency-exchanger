@@ -7,6 +7,9 @@ import lombok.NonNull;
 import java.math.BigDecimal;
 import java.util.Date;
 
+/*
+Класс-модель события для отправки сообщения в Кафку
+ */
 @Data
 @Builder
 public class AccountEvent {
@@ -21,11 +24,11 @@ public class AccountEvent {
     private String currencyCode; //код валюты
 
     @NonNull
-    private Operation operation; // Операции - пополнение счета и перевод
+    private Operation operation; // Операции - пополнение счета и перевод (тип операции)
 
     @NonNull
     private BigDecimal amount;
 
-    @reactor.util.annotation.NonNull
+    @NonNull
     private Date created;
 }

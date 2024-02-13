@@ -48,8 +48,8 @@ public class AuthConfig {
         return new BCryptPasswordEncoder();
     }
 
-    //Определили бин который будет загружать данные о пользователях и передавать их AuthenticationManagerProvider, а он в свою очередь
-    //передаст эти данные AuthenticationManager-у. В даноом бине используем созданный нами кастомный класс CustomUserDetailService, который будет
+    //Определили бин который будет загружать данные о пользователях и передавать их в AuthenticationProvider, а он в свою очередь
+    //подключиться к AuthenticationManager-у. В данном бине используем созданный нами кастомный класс CustomUserDetailService, который будет
     //имплементировать интерфейс userDetailsService.
     @Bean
     public UserDetailsService userDetailsService() {

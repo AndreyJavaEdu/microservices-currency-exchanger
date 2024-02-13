@@ -13,7 +13,7 @@ class AccountHistoryController(private val historyService: AccountEventService) 
  */
     @GetMapping("/account/{id}")
     fun findAllOperationsInAccountHistory(@PathVariable("id") accountId: Long, @RequestHeader userId: String): List<AccountEvent>{
-        val userIdfromHeader: Long = userId.toLong()
-        return historyService.findAllByAccountEventsFromHistoryDB(accountId, userIdfromHeader)
+        val userIdFromHeader: Long = userId.toLong()
+        return historyService.findAllByAccountEventsFromHistoryDB(accountId, userIdFromHeader)
     }
 }

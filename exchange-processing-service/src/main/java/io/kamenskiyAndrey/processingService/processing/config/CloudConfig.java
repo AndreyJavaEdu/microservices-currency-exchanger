@@ -9,12 +9,6 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class CloudConfig {
 
-//    @Bean
-//    @LoadBalanced
-//    public RestTemplateBuilder restTemplateBuilder() {
-//        return new RestTemplateBuilder();
-//    }
-
     @Bean
     @LoadBalanced
     public RestTemplate restTemplate(RestTemplateBuilder restTemplateBuilder) {

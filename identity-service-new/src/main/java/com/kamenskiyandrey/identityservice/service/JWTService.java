@@ -7,6 +7,8 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -18,16 +20,21 @@ import java.util.Map;
 Специальный севис класс для получения JWT токена и его валидации (подтверждения),
 здесь в логике мы используем библиотеку JWT, зависимости которой добавлили ранее
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JWTService {
     private final UserCredentialRepository repository;
-    public final static String SECRET = "087F23A66DEE433829D5EB642EA91A0D7C2AE1E0CF1F30B2041EAB3465898840"; //секретный 32 битный ключ от Зеона сгенерированный Морфеусом =))
-//Метод для валидации токена
+    @Value("${jwtService.secret}")
+    private String SECRET; //секретный 32 битный ключ, сгенерировали сами.
+
+
+    //Метод для валидации токена
     public void validateToken(final String token){
         JwtParser parser = Jwts.parserBuilder().setSigningKey(getSignKey()).build(); //Строим парсер с учетом заданного секретного ключа
         parser.parseClaimsJws(token); //Парcим наш токен по значению секретного ключа и проверяем (в случае несоответствия будет Exception)
     }
+
     //метод получения токена, который вызывает другой метод по созданию токена
     public String generateToken(String userName) {
         Map<String, Object> claims = new HashMap<>();
@@ -51,6 +58,7 @@ public class JWTService {
     // Метод получения секретного ключа после декодирования
     private Key getSignKey() {
         byte[] keyBytes = Decoders.BASE64.decode(SECRET); //декодируем строку, которая закодирована в BASE64
+        log.info("Ключ: {}", Keys.hmacShaKeyFor(keyBytes));
         return Keys.hmacShaKeyFor(keyBytes); // получаем секретный ключ
     }
 }

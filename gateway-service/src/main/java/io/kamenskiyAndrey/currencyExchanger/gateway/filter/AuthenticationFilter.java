@@ -2,6 +2,8 @@ package io.kamenskiyAndrey.currencyExchanger.gateway.filter;
 
 
 import io.kamenskiyAndrey.currencyExchanger.gateway.util.JWTUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
@@ -17,6 +19,8 @@ import org.springframework.web.client.RestTemplate;
  */
 @Component
 public class AuthenticationFilter extends AbstractGatewayFilterFactory<AuthenticationFilter.Config> {
+    Logger logger = LoggerFactory.getLogger(AuthenticationFilter.class);
+
 
     @Autowired
     private RouteValidator validator;
@@ -42,6 +46,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             if (validator.isSecured.test(exchange.getRequest())) {
                 //тут проверяем содержит ли Header токен или не содержит
                 if (!exchange.getRequest().getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) { //проверяем есть ли Хедер авторизации в заголовке запроса
+                    logger.error("Headers are not have authorization");
                     throw new RuntimeException("Headers are not have authorization");
                 }
                 //если условие выше не выполняется, тогда получим этот Хедер как строку
@@ -64,7 +69,7 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
 
 
                 } catch (Exception ex) {
-                    System.out.println("invalid access!!!");
+                    logger.error("Invalid Access");
                     throw new RuntimeException("Неавторизованный запрос в приложении, токен не прошел валидацию");
                 }
             }
