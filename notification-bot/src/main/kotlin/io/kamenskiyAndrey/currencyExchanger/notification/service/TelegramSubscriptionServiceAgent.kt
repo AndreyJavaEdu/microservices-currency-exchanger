@@ -37,14 +37,14 @@ class TelegramSubscriptionServiceAgent(
             sendNotification(chatId, responseText)
         }
     }
-//Метод получения подстроки равной длине команды плюс 1 и без пробелов
+//Метод получения подстроки равной длине команды плюс 1 и без пробелов - получаем текст сообщения
     private fun extractMessage(messageText: String, command: String): String =
         messageText.substring(command.length + 1).trim()
 
 
     /*
     Метод определения команды - данная функция используется в методе onUpdateReceived выше в коде.
-    функция `resolveCommand` проверяет, начинается ли текст с символа `/`.
+    Функция `resolveCommand` проверяет, начинается ли текст с символа `/`.
     Если да, то она возвращает подстроку до первого пробела (без символа `/`). Если нет, то она возвращает `null`.
      */
     private fun resolveCommand(text: String): String? =

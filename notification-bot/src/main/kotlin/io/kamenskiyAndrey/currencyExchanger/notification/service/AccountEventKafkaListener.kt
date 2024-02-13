@@ -34,7 +34,7 @@ class AccountEventKafkaListener(
 
         logger.info("consume message $value for account: $key")
 
-        //десериализовываем  объект entity - AccountEvent из Json в объяект java
+        //Десериализовываем  объект entity - AccountEvent из Json в объект java
         val event: AccountEvent = try { //получаем само событие
             mapper.readValue(value)
         } catch (e: Exception) {
@@ -42,7 +42,7 @@ class AccountEventKafkaListener(
             throw e
         }
             /*
-            Тут мы проверяем есть ли упользователя с определенным userId подписка на чат,
+            Тут мы проверяем есть ли у пользователя с определенным userId подписка на чат,
              если есть то мы получаем его chatId. Далее по данному chatId
              в зависимости от операции мы форматируем сообщение и отправляем это сообщение в телеграмм агент
              */
