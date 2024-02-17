@@ -37,11 +37,12 @@ Spring Cloud Eureka обычно используется в среде микр
 
 - [gateway-service](gateway-service) - сервис Spring Cloud Gateway - это централизованная точка входа для 
 управления маршрутизацией и обеспечения безопасности для 
-микросервисной архитектуры. Данный сервис представляет собой общий шлюз для обработки запросов
-поступающих в микросервисы [rate_currency_service-master](rate_currency_service-master), 
+микросервисной архитектуры. Данный сервис представляет собой общий шлюз 
+для обработки запросов поступающих в микросервисы [rate_currency_service-master](rate_currency_service-master), 
 [exchange-processing-service](exchange-processing-service), [history-service](history-service), [identity-service-new](identity-service-new)
 из Фронтенд приложения пользователя (в нашем случае демонстрация будет производиться с помощью Postman).
 Также данный шлюз содержит фильтр и проверяет, содержит ли запрос пользователя JWT токен.
+[Объяснение сервиса gateway](#Gateway)
 
   
 ### Общая схема проекта:
@@ -714,7 +715,7 @@ eureka:
 
 
 
-### 4. Сервис Spring Cloud Gateway - [gateway-service](gateway-service)
+### <a name="Gateway">4. Сервис Spring Cloud Gateway - [gateway-service](gateway-service)</a>
 
 У нас есть единая точка доступа для всех микросервисов от клиента - в нашем случае это Rest интерфейс, 
 вызываемый web приложением. А сервисов у нас очень много и сервисный шлюз gateway действует, как посредник
