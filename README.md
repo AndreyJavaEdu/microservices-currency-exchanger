@@ -4,7 +4,7 @@
 
 **Микросервисы в проекте:**
 - [rate_currency_service-master](rate_currency_service-master) - микросервис по 
-- получению котировок валют с https://www.cbr.ru/ - 
+- получению котировок валют с https://www.cbr.ru/ - [Объяснение сервиса currency](#Currency)
 
 
 - [exchange-processing-service](exchange-processing-service) - микросервис по созданию счета пользователя, 
@@ -15,13 +15,12 @@
 - [eureka-service](eureka-service) - Сервис регистрации и обнаружения всех микросервисов на сервере Eureka. 
 Spring Cloud Eureka обычно используется в среде микросервисов для регистрации, 
 обнаружения и управления взаимодействием между службами. Это помогает сделать архитектуру приложения более гибкой, 
-масштабируемой и отказоустойчивой.
+масштабируемой и отказоустойчивой - [Объяснение сервиса eureka](#Eureka).
 
 
 - [identity-service-new](identity-service-new) - микросервис по обеспичению безопасности всех микросервисов - 
 в данном микросервисе реализованы запросы на регистрацию пользователя, сохранение его логина и пароля (в закодированном формате)
-в БД и хранение учетных. Также данный сервис реализует получение JWT токена пользователем и проверка токена (валидация) -
-  [Объяснение сервиса identity](#Identity).
+в БД и хранение учетных. Также данный сервис реализует получение JWT токена пользователем и проверка токена (валидация).
 
 
 - [history-service](history-service) - микросервис по получению истории операций со 
@@ -223,7 +222,7 @@ docker-compose up -d
 
 ## Объяснение как работают микросервисы
 
-### 1. Микросервис по получению котировок валют ([rate_currency_service-master](rate_currency_service-master))
+### <a name="Currency">1. Микросервис по получению котировок валют ([rate_currency_service-master](rate_currency_service-master))</a>
 
 ![Схема работы микросервиса текущих котировок валют.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/4eb6724306484e3bb167447175b80e81e5dbc151/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/%D0%A1%D1%85%D0%B5%D0%BC%D0%B0%20%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%8B%20%D0%BC%D0%B8%D0%BA%D1%80%D0%BE%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D0%B0%20%D1%82%D0%B5%D0%BA%D1%83%D1%89%D0%B8%D1%85%20%D0%BA%D0%BE%D1%82%D0%B8%D1%80%D0%BE%D0%B2%D0%BE%D0%BA%20%D0%B2%D0%B0%D0%BB%D1%8E%D1%82.png)
 
@@ -567,7 +566,7 @@ JSON преобразуется в объект [ExchangeMoneyDTO.java](exchange
 
 </details>
 
-### <a name="Identity">3. Сервис регистрации и обнаружения микросервисов - Spring Cloud Eureka ([eureka-service](eureka-service))</a>
+### <a name="Eureka">3. Сервис регистрации и обнаружения микросервисов - Spring Cloud Eureka ([eureka-service](eureka-service))</a>
 Когда у нас большое количество микросервисов, то при их развертывании нам
 необходимо ими управлять и контролировать их состояние.
 
