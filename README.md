@@ -201,6 +201,8 @@ services:
 [postgres_data](opt%2Fdocker_postgres%2Fpostgres_data), данные скрипты копируются
 в директорию в самом контейнере postgres (/docker-entrypoint-initdb.d/) и запускаются в нем.
 
+Перед запуском docker-compos необходимо сбилдить все микросервисы с помощью сборщиков maven
+и gradle, после этого запустить docker-compose.yml.
 
 ## Объяснение как работают микросервисы
 
