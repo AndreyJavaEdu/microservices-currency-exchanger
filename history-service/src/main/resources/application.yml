@@ -10,7 +10,7 @@ spring:
     name: history-service
 
   datasource:
-    url: jdbc:postgresql://${cloud.db-host}:5433/account-history
+    url: jdbc:postgresql://${cloud.db-host}:5433/account_history
     username: postgres
     password: password
     driver-class-name: org.postgresql.Driver
@@ -27,7 +27,7 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db
-    url: jdbc:postgresql://${cloud.db-host}:5433/account-history
+    url: jdbc:postgresql://${cloud.db-host}:5433/account_history
     user: postgres
     password: password
   jpa:

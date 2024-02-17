@@ -65,6 +65,6 @@ eureka:
     prefer-ip-address: true
     instance-id: ${spring.application.name}:${server.port}
 # Видимость логов при обращении к сервисам
-logging:
-  level:
-    org.springframework.cloud.gateway: DEBUG
+#logging:
+#  level:
+#    org.springframework.cloud.gateway: DEBUG
