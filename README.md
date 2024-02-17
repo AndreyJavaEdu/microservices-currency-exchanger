@@ -42,6 +42,165 @@ Spring Cloud Eureka обычно используется в среде микр
 ### Общая схема проекта:
 ![Блок схема проекта микросервисы.png](https://github.com/AndreyJavaEdu/microservices-currency-exchanger/blob/03194480b543b4c3d1d750758b0748c49669cc6e/%D0%A1%D1%85%D0%B5%D0%BC%D1%8B%20%D0%B4%D0%BB%D1%8F%20README/%D0%91%D0%BB%D0%BE%D0%BA%20%D1%81%D1%85%D0%B5%D0%BC%D0%B0%20%D0%BF%D1%80%D0%BE%D0%B5%D0%BA%D1%82%D0%B0%20%D0%BC%D0%B8%D0%BA%D1%80%D0%BE%D1%81%D0%B5%D1%80%D0%B2%D0%B8%D1%81%D1%8B.png)
 
+## Развертывание всех микросервисов локально с использованием Docker и docker-compose.
+Для каждого микросервиса написан свой Dockerfile, в котором определены переменные окружения,
+а также основа образа и действие при запуске контейнера (командой ENTRYPOINT):
+- rate_currency_service-master: [Dockerfile](rate_currency_service-master%2FDockerfile)
+- exchange-processing-service: [Dockerfile](exchange-processing-service%2FDockerfile)
+- eureka-service: [Dockerfile](eureka-service%2FDockerfile)
+- identity-service-new: [Dockerfile](identity-service-new%2FDockerfile)
+- history-service: [Dockerfile](history-service%2FDockerfile)
+- notification-bot: [Dockerfile](notification-bot%2FDockerfile)
+- gateway-service: [Dockerfile](gateway-service%2FDockerfile)
+
+Для настройки запуска контейнеров из образов микросервисов реализован [docker-compose.yml](docker-compose.yml):
+```dockerfile
+version: '3.5'
+
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: wurstmeister/kafka
+    container_name: kafka
+    hostname: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: "172.17.0.1"
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CREATE_TOPICS: "account-events:1:1"
+    depends_on:
+      - zookeeper
+
+  postgres_exchange:
+    image: postgres:12.17-alpine3.19
+    container_name: postgres_exchange
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ./opt/docker_postgres/dbdata:/var/lib/postgresql/data
+      - ./opt/docker_postgres/postgres_data/init-database.sh:/docker-entrypoint-initdb.d/init-database.sh
+      - ./opt/docker_postgres/postgres_data/init-database2.sh:/docker-entrypoint-initdb.d/init-database2.sh
+      - ./opt/docker_postgres/postgres_data/init-database3.sh:/docker-entrypoint-initdb.d/init-database3.sh
+
+  eureka-server:
+    build: ./eureka-service
+    container_name: eureka-service
+    hostname: eureka-service
+    ports:
+      - "8761:8761"
+
+  currency-service:
+    build: ./rate_currency_service-master
+    container_name: currency-rate-service-1
+    hostname: currency-rate-service-1
+    ports:
+      - "8084:8084"
+    environment:
+      EUREKA_HOST: "172.17.0.1"
+
+  processing-service:
+    build: ./exchange-processing-service
+    container_name: processing-service
+    hostname: processing-service
+    ports:
+      - 8090:8090
+    environment:
+      DB_HOST: "172.17.0.1"
+      KAFKA_HOST: "172.17.0.1"
+      EUREKA_HOST: "172.17.0.1"
+    depends_on:
+      - postgres_exchange
+      - zookeeper
+      - kafka
+
+  gateway-service:
+    build: ./gateway-service
+    container_name: gateway-service
+    hostname: gateway-service
+    ports:
+      - 8080:8080
+    environment:
+      EUREKA_HOST: "172.17.0.1"
+      PROCESSING_URL: "http://172.17.0.1:8090"
+      CURRENCY_URL: "http://172.17.0.1:8084"
+      AUTH_URL: "http://172.17.0.1:9797"
+      HISTORY_URL: "http://172.17.0.1:8015"
+    depends_on:
+     - eureka-server
+
+  identity-service:
+    build: ./identity-service-new
+    container_name: identity-service
+    hostname: identity-service
+    ports:
+      - 9797:9797
+    environment:
+      EUREKA_HOST: "172.17.0.1"
+      DB_HOST: "172.17.0.1"
+    restart: unless-stopped
+    depends_on:
+      - eureka-server
+
+  history-service:
+    build: ./history-service
+    container_name: history-service
+    hostname: history-service
+    ports:
+      - 8015:8015
+    environment:
+      DB_HOST: "172.17.0.1"
+      KAFKA_HOST: "172.17.0.1"
+      EUREKA_HOST: "172.17.0.1"
+    depends_on:
+      - eureka-server
+      - kafka
+      - processing-service
+
+  notification-bot:
+    build: ./notification-bot
+    container_name: notification-bot
+    hostname: notification-bot
+    ports:
+      - 8077:8077
+    volumes:
+      - .\notification-bot\conf\telegram.token:/conf/telegram.token
+    environment:
+      KAFKA_HOST: "172.17.0.1"
+      TELEGRAM_BOT_TOKEN: .\conf\telegram.token
+      IDENTITY_SERVICE: "http://172.17.0.1:9797/auth/token"
+    depends_on:
+      - kafka
+      - processing-service
+```
+В данном файле мы переопределяем переменные окружения всех микросервисов, которые были изначально
+определены в Dockerfile-х, задав им значения непосредственно через ip-адрес сети bridge,
+как 172.17.0.1. Т.о. контейнеры поднятые с помощью docker-compose могут взаимодействовать
+между собой по данной сети, а также через прокинутые порты.
+
+В docker-compose файле мы также описали запуск контейнера для Kafka и Zookeeper. Для создания
+обараза использовали готовый образ с docker-hub.
+
+В качестве базы данных использовали готовый образ с docker-hub - postgres:12.17-alpine3.19.
+Особенностью является то, что мы связали директорию для хранения баз данных локально с 
+директорией в контейнере docker. При перезапуске контейнера, все данные будут взяты с локальной
+машины и восстановлены в самом контейнере. Еще одной особенностью является то, что
+при развертывании нового контейнера из образа БД происходит автоматическое создание
+трех баз данных (processing, account_history, security) необходимых для работы соответствующих
+микросервисов. Данная функция реализована за счет созданных скриптов, которые находятся в директории
+[postgres_data](opt%2Fdocker_postgres%2Fpostgres_data), данные скрипты копируются
+в директорию в самом контейнере postgres (/docker-entrypoint-initdb.d/) и запускаются в нем.
+
 
 ## Объяснение как работают микросервисы
 
