@@ -4,7 +4,7 @@
 
 **Микросервисы в проекте:**
 - [rate_currency_service-master](rate_currency_service-master) - микросервис по 
-- получению котировок валют с https://www.cbr.ru/ - [Объяснение сервиса currency](#Currency).
+получению котировок валют с https://www.cbr.ru/ - [Объяснение сервиса currency](#Currency).
 
 
 - [exchange-processing-service](exchange-processing-service) - микросервис по созданию счета пользователя, 
