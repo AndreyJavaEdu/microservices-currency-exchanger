@@ -10,6 +10,7 @@ EXPOSE 8090
 
 ENTRYPOINT [ "sh", "-c", "java \
     -jar /app.jar \
-    --cloud.db-host=$DB_HOST --cloud.kafka-host=$KAFKA_HOST \
+    --cloud.db-host=$DB_HOST \
+    --cloud.kafka-host=$KAFKA_HOST \
     --cloud.eureka-host=$EUREKA_HOST \
     " ]

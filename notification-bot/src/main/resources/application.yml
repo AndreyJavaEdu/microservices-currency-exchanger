@@ -4,10 +4,9 @@ server:
 telegram:
     botName: java-bot-notification
     token: ${TELEGRAM_BOT_TOKEN}
+    identity-service: "http://localhost:9797/auth/token"
 
 cloud:
-    db-host: localhost
-    eureka-host: localhost
     kafka-host: localhost
 
 spring:

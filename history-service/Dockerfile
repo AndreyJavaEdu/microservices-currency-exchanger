@@ -1,0 +1,16 @@
+FROM openjdk:17-jdk-alpine
+COPY ./build/libs/*jar app.jar
+
+ENV DB_HOST=localhost
+ENV EUREKA_HOST=localhost
+ENV KAFKA_HOST=localhost
+
+
+EXPOSE 8015
+
+ENTRYPOINT [ "sh", "-c", "java \
+    -jar /app.jar \
+    --cloud.db-host=$DB_HOST \
+    --cloud.kafka-host=$KAFKA_HOST \
+    --cloud.eureka-host=$EUREKA_HOST \
+    " ]
