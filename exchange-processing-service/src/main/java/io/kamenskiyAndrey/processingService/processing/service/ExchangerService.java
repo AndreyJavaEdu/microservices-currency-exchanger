@@ -57,7 +57,7 @@ public class ExchangerService {
     }
 
     /*
-    Вспомогательный метод перевода валюты с разными катировками отличными от рублей
+    Вспомогательный метод перевода валюты с разными котировками отличными от рублей
      */
     public BigDecimal exchangeWithDifferenceOfAllCurrCode(String uuid, BigDecimal curRateSource, BigDecimal curRateTarget
             , AccountEntity source, AccountEntity target, BigDecimal ammount) {

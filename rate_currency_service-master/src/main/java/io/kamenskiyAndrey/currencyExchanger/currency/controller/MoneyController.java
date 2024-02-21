@@ -1,5 +1,6 @@
 package io.kamenskiyAndrey.currencyExchanger.currency.controller;
 
+import io.kamenskiyAndrey.currencyExchanger.currency.exceptions.CustomCurrencyCodeException;
 import io.kamenskiyAndrey.currencyExchanger.currency.service.CurService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,7 +19,7 @@ public class MoneyController {
 
     //Метод получения котировки валюты
     @GetMapping("/quotation/{code}")
-    public BigDecimal getCurrencyQuotation(@PathVariable("code") String code){
+    public BigDecimal getCurrencyQuotation(@PathVariable("code") String code) {
         return currencyService.requestByCurrencyCode(code);
     }
 }
