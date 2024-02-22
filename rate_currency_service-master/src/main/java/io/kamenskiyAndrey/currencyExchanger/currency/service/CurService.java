@@ -42,8 +42,8 @@ public class CurService {
         try {
             BigDecimal value = cache.get(LocalDate.now(), this::callAllByCurrentDate).get(currencyCode);
             if (value==null) {
-                throw new CustomCurrencyCodeException("Некорректно введен код валюты, код валюты состоит" +
-                        "из 3 заглавных латинских букв,например USD, EUR");
+                throw new CustomCurrencyCodeException("Некорректно введен код валюты, код валюты должен состоять" +
+                        "из 3 заглавных латинских букв,например USD, EUR!!!");
             }
             LOGGER.info("Котировка валюты value : {}", value);
             return value;

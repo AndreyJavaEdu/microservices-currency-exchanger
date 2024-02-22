@@ -38,7 +38,8 @@ public class CbrCurrencyRateClient implements CurrencyDateHttpClient {
             return response.body();
         }catch (IOException | InterruptedException | IllegalArgumentException  ex){
             log.error("Ошибка прерывания метода send, нет связи с сервером ЦБР, {}", url, ex);
-            throw new CustomSendingException("Метод send не выполнил отправку запроса по адресу", url, ex);
+            throw new CustomSendingException("Метод send не выполнил отправку запроса по адресу"+ " "+  url +
+                    ". Повторите попытку позже.", ex);
         }
     }
 
